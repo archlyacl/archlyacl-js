@@ -1,0 +1,25 @@
+{
+  "name": "archlyacl-js",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Archly is a library for creating a hierarchy-based access control list (ACL).",
+  "main": "dist/archly.common.min.js",
+  "unpkg": "dist/archly.browser.min.js",
+  "scripts": {
+    "build": "rollup -c scripts/rollup.config.js",
+    "coverage": "vitest run --coverage",
+    "test": "vitest"
+  },
+  "author": "Chua Chee How <chuacheehow@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-typescript": "^8.3.4",
+    "c8": "^7.12.0",
+    "rollup": "^2.77.2",
+    "rollup-plugin-minify-es": "^1.1.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.4",
+    "vitest": "^0.21.0"
+  }
+}
