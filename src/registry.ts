@@ -107,7 +107,7 @@ export function display(path: string[]): string {
  * @param reg - The Registry object to traverse to get the child entities.
  * @param parent - The parent entity to get the children for.
  */
-export function getChildIds(reg: Registry, parent: Entity): string[] {
+export function getChildIds(reg: Registry, parent: Entity | string): string[] {
   const children: string[] = [];
   const parentId = getValue(parent);
 
@@ -145,6 +145,7 @@ export function has(reg: Registry, entity: Entity): boolean {
  *
  * @param reg - The Registry object to check against.
  * @param parent - The parent entity to check for.
+ * @returns Also returns false if the parent entity does not exist in the registry.
  */
 export function hasChild(reg: Registry, parent: Entity): boolean {
   const parentId = getValue(parent);
