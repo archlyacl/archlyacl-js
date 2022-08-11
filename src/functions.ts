@@ -15,7 +15,7 @@ import { Entity } from './types';
  * @param entity - The item to add to the registry.
  * @throws {InvalidTypeError} Throws this error if the supplied item does not meet any of the conditions.
  */
-export function getValue(entity: Partial<Entity> | string): string {
+export function getValue(entity: Partial<Entity>): string {
   if (typeof entity === 'string') {
     return entity;
   }

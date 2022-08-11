@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DuplicateError, NotFoundError } from './errors';
+import { DuplicateError, InvalidTypeError, NotFoundError } from './errors';
 import * as r from './registry';
 import { ROOT_ENTITY } from './types';
 
@@ -50,54 +50,11 @@ describe('Single level', () => {
       r.remove(reg, e1);
     }).toThrow(NotFoundError);
   });
-
-  test('Clone/Clear/Import/Traverse', () => {
-    const clone = r.clone(reg);
-    expect(clone).toEqual({
-      records: {
-        e2: {
-          id: 'e2',
-        },
-        e3: {
-          id: 'e3',
-        },
-        e4: {
-          id: 'e4',
-        },
-      },
-      register: {
-        e2: ROOT_ENTITY,
-        e3: ROOT_ENTITY,
-        e4: ROOT_ENTITY,
-      },
-    });
-
-    expect(r.getChildIds(reg, e2)).toEqual([]);
-    expect(r.getChildIds(reg, ROOT_ENTITY)).toEqual(['e2', 'e3', 'e4']);
-    expect(r.getRecord(reg, 'e2')).toEqual({ id: 'e2' });
-    expect(r.has(reg, e2)).toBe(true);
-    expect(r.has(reg, e1)).toBe(false);
-    expect(r.hasChild(reg, e2)).toBe(false);
-    expect(r.hasChild(reg, e1)).toBe(false);
-
-    r.clear(reg);
-    expect(reg.records).toEqual({});
-    expect(reg.register).toEqual({});
-
-    const regi = r.recreate(clone);
-
-    expect(r.size(regi)).toBe(3);
-    expect(r.printAll(regi)).toBe(` e2 | *
- e3 | *
- e4 | *
-`);
-
-    expect(r.traverseToRoot(regi, e2)).toEqual(['e2', ROOT_ENTITY]);
-  });
 });
 
-describe('2-levels', () => {
-  const reg: r.Registry = {
+describe('2 levels', () => {
+  // Need to be a `let` because of clear and import.
+  let reg: r.Registry = {
     records: {},
     register: {},
   };
@@ -112,6 +69,10 @@ describe('2-levels', () => {
   const e2a1 = { id: 'e2a1' };
   const e3a = { id: 'e3a' };
   const e3b = { id: 'e3b' };
+  const e4 = 'e4';
+  const e4a = { id: 'e4a' };
+  const e4b = 'e4b';
+  const e1b = 'e1b';
 
   test('Add entries', () => {
     // 1st level.
@@ -152,9 +113,171 @@ describe('2-levels', () => {
     }).toThrow(NotFoundError);
   });
 
-  test('Remove entries', () => {
-    expect(r.size(reg)).toBe(8);
+  test('add string entities', () => {
+    r.add(reg, e4);
+    expect(r.size(reg)).toBe(9);
+    expect(r.printAll(reg)).toBe(`  e1 | *
+  e2 | *
+  e3 | *
+ e1a | e1
+ e2a | e2
+ e2b | e2
+ e3a | e3
+ e3b | e3
+  e4 | *
+`);
 
+    // EntityType under string.
+    r.add(reg, e4a, e4);
+    expect(r.size(reg)).toBe(10);
+    expect(r.printAll(reg)).toBe(`  e1 | *
+  e2 | *
+  e3 | *
+ e1a | e1
+ e2a | e2
+ e2b | e2
+ e3a | e3
+ e3b | e3
+  e4 | *
+ e4a | e4
+`);
+
+    // String under string.
+    r.add(reg, e4b, e4);
+    expect(r.size(reg)).toBe(11);
+    expect(r.printAll(reg)).toBe(`  e1 | *
+  e2 | *
+  e3 | *
+ e1a | e1
+ e2a | e2
+ e2b | e2
+ e3a | e3
+ e3b | e3
+  e4 | *
+ e4a | e4
+ e4b | e4
+`);
+
+    // String under entity.
+    r.add(reg, e1b, e1);
+    expect(r.size(reg)).toBe(12);
+    expect(r.printAll(reg)).toBe(`  e1 | *
+  e2 | *
+  e3 | *
+ e1a | e1
+ e2a | e2
+ e2b | e2
+ e3a | e3
+ e3b | e3
+  e4 | *
+ e4a | e4
+ e4b | e4
+ e1b | e1
+`);
+  });
+
+  test('Clone/Clear/Import/Traverse', () => {
+    const clone = r.clone(reg);
+    expect(clone).toEqual({
+      records: {
+        e1: {
+          id: 'e1',
+        },
+        e2: {
+          id: 'e2',
+        },
+        e3: {
+          id: 'e3',
+        },
+        e4: 'e4',
+        e1a: {
+          id: 'e1a',
+        },
+        e2a: {
+          id: 'e2a',
+        },
+        e2b: {
+          id: 'e2b',
+        },
+        e3a: {
+          id: 'e3a',
+        },
+        e3b: {
+          id: 'e3b',
+        },
+        e4a: {
+          id: 'e4a',
+        },
+        e4b: 'e4b',
+        e1b: 'e1b',
+      },
+      register: {
+        e1: ROOT_ENTITY,
+        e2: ROOT_ENTITY,
+        e3: ROOT_ENTITY,
+        e1a: e1.id,
+        e2a: e2.id,
+        e2b: e2.id,
+        e3a: e3.id,
+        e3b: e3.id,
+        e4: ROOT_ENTITY,
+        e4a: e4,
+        e4b: e4,
+        e1b: e1.id,
+      },
+    });
+
+    expect(r.getChildIds(reg, e2)).toEqual([e2a.id, e2b.id]);
+    expect(r.getChildIds(reg, ROOT_ENTITY)).toEqual([e1.id, e2.id, e3.id, e4]);
+    expect(r.getRecord(reg, 'e2')).toEqual({ id: 'e2' });
+    expect(r.has(reg, e2)).toBe(true);
+    expect(r.has(reg, e1a1)).toBe(false);
+    expect(r.hasChild(reg, e1)).toBe(true);
+    expect(r.hasChild(reg, e1a)).toBe(false);
+
+    r.clear(reg);
+    expect(reg.records).toEqual({});
+    expect(reg.register).toEqual({});
+
+    const regi = r.recreate(clone);
+    reg = regi; // Re-assign for "Remove" tests.
+
+    expect(r.size(regi)).toBe(12);
+    expect(r.printAll(reg)).toBe(`  e1 | *
+  e2 | *
+  e3 | *
+ e1a | e1
+ e2a | e2
+ e2b | e2
+ e3a | e3
+ e3b | e3
+  e4 | *
+ e4a | e4
+ e4b | e4
+ e1b | e1
+`);
+  });
+
+  test('recreate coverage', () => {
+    const in1 = {
+      records: '',
+      register: {},
+    };
+    expect(() => {
+      r.recreate(in1);
+    }).toThrow(InvalidTypeError);
+
+    const in2 = {
+      records: {},
+      register: 0,
+    };
+    expect(() => {
+      r.recreate(in2);
+    }).toThrow(InvalidTypeError);
+  });
+
+  test('Remove entries', () => {
+    expect(r.size(reg)).toBe(12);
     let removed = r.remove(reg, e1, false);
     expect(removed.length).toBe(1);
     expect(removed).toEqual([{ id: 'e1' }]);
@@ -165,6 +288,10 @@ describe('2-levels', () => {
  e2b | e2
  e3a | e3
  e3b | e3
+  e4 | *
+ e4a | e4
+ e4b | e4
+ e1b | *
 `);
 
     removed = r.remove(reg, e2, false);
@@ -176,6 +303,10 @@ describe('2-levels', () => {
  e2b | *
  e3a | e3
  e3b | e3
+  e4 | *
+ e4a | e4
+ e4b | e4
+ e1b | *
 `);
 
     removed = r.remove(reg, e3, true);
@@ -184,6 +315,10 @@ describe('2-levels', () => {
     expect(r.printAll(reg)).toBe(` e1a | *
  e2a | *
  e2b | *
+  e4 | *
+ e4a | e4
+ e4b | e4
+ e1b | *
 `);
 
     removed = r.remove(reg, e2a);
@@ -191,6 +326,297 @@ describe('2-levels', () => {
     expect(removed).toEqual([{ id: 'e2a' }]);
     expect(r.printAll(reg)).toBe(` e1a | *
  e2b | *
+  e4 | *
+ e4a | e4
+ e4b | e4
+ e1b | *
 `);
+  });
+});
+
+describe('4 levels', () => {
+  const reg: r.Registry = {
+    records: {},
+    register: {},
+  };
+
+  const e1 = { id: 'e1' };
+  const e2 = { id: 'e2' };
+  const e3 = { id: 'e3' };
+  const e1a = { id: 'e1a' };
+  const e1b = { id: 'e1b' };
+  const e2a = { id: 'e2a' };
+  const e2b = { id: 'e2b' };
+  const e1a1 = { id: 'e1a1' };
+  const e1b1 = { id: 'e1b1' };
+  const e2a1 = { id: 'e2a1' };
+  const e2a2 = { id: 'e2a2' };
+  const e2b1 = { id: 'e2b1' };
+  const e2b2 = { id: 'e2b2' };
+  const e3a = { id: 'e3a' };
+  const e3b = { id: 'e3b' };
+  const e3a1 = { id: 'e3a1' };
+  const e3a2 = { id: 'e3a2' };
+  const e3a3 = { id: 'e3a3' };
+  const e3b1 = { id: 'e3b1' };
+  const e3b2 = { id: 'e3b2' };
+  const e3b3 = { id: 'e3b3' };
+  const e3a1a = { id: 'e3a1a' };
+
+  test('Add entries', () => {
+    // 1st level.
+    r.add(reg, e1);
+    r.add(reg, e2);
+    r.add(reg, e3);
+    expect(r.size(reg)).toBe(3);
+    expect(r.printAll(reg)).toBe(` e1 | *
+ e2 | *
+ e3 | *
+`);
+
+    // 2nd level.
+    r.add(reg, e1a, e1);
+    r.add(reg, e1b, e1);
+    r.add(reg, e2a, e2);
+    r.add(reg, e2b, e2);
+    r.add(reg, e3a, e3);
+    r.add(reg, e3b, e3);
+    expect(r.size(reg)).toBe(9);
+    expect(r.printAll(reg)).toBe(`  e1 | *
+  e2 | *
+  e3 | *
+ e1a | e1
+ e1b | e1
+ e2a | e2
+ e2b | e2
+ e3a | e3
+ e3b | e3
+`);
+
+    // 3rd level
+    r.add(reg, e1a1, e1a);
+    r.add(reg, e1b1, e1b);
+    r.add(reg, e2a1, e2a);
+    r.add(reg, e2a2, e2a);
+    r.add(reg, e2b1, e2b);
+    r.add(reg, e2b2, e2b);
+    r.add(reg, e3a1, e3a);
+    r.add(reg, e3a2, e3a);
+    r.add(reg, e3a3, e3a);
+    r.add(reg, e3b1, e3b);
+    r.add(reg, e3b2, e3b);
+    r.add(reg, e3b3, e3b);
+    expect(r.size(reg)).toBe(21);
+    expect(r.printAll(reg)).toBe(`   e1 | *
+   e2 | *
+   e3 | *
+  e1a | e1
+  e1b | e1
+  e2a | e2
+  e2b | e2
+  e3a | e3
+  e3b | e3
+ e1a1 | e1a
+ e1b1 | e1b
+ e2a1 | e2a
+ e2a2 | e2a
+ e2b1 | e2b
+ e2b2 | e2b
+ e3a1 | e3a
+ e3a2 | e3a
+ e3a3 | e3a
+ e3b1 | e3b
+ e3b2 | e3b
+ e3b3 | e3b
+`);
+
+    // 4th level
+    r.add(reg, e3a1a, e3a1);
+    expect(r.size(reg)).toBe(22);
+    expect(r.printAll(reg)).toBe(`    e1 | *
+    e2 | *
+    e3 | *
+   e1a | e1
+   e1b | e1
+   e2a | e2
+   e2b | e2
+   e3a | e3
+   e3b | e3
+  e1a1 | e1a
+  e1b1 | e1b
+  e2a1 | e2a
+  e2a2 | e2a
+  e2b1 | e2b
+  e2b2 | e2b
+  e3a1 | e3a
+  e3a2 | e3a
+  e3a3 | e3a
+  e3b1 | e3b
+  e3b2 | e3b
+  e3b3 | e3b
+ e3a1a | e3a1
+`);
+    // Show the deepest path.
+    expect(r.traverseToRoot(reg, e3a1a)).toEqual([
+      'e3a1a',
+      'e3a1',
+      'e3a',
+      'e3',
+      '*',
+    ]);
+    expect(r.traverseToRoot(reg, e3a)).toEqual(['e3a', 'e3', '*']);
+
+    // Show the most complex tree.
+    expect(r.print(reg, ROOT_ENTITY)).toBe(`- *
+  - e1
+    - e1a
+      - e1a1
+    - e1b
+      - e1b1
+  - e2
+    - e2a
+      - e2a1
+      - e2a2
+    - e2b
+      - e2b1
+      - e2b2
+  - e3
+    - e3a
+      - e3a1
+        - e3a1a
+      - e3a2
+      - e3a3
+    - e3b
+      - e3b1
+      - e3b2
+      - e3b3
+`);
+    expect(r.print(reg, e3)).toBe(`- e3
+  - e3a
+    - e3a1
+      - e3a1a
+    - e3a2
+    - e3a3
+  - e3b
+    - e3b1
+    - e3b2
+    - e3b3
+`);
+  });
+
+  test('Remove entries', () => {
+    let removed = r.remove(reg, e1a, true);
+    expect(removed.length).toBe(2);
+    expect(removed).toEqual([{ id: 'e1a1' }, { id: 'e1a' }]);
+    expect(r.size(reg)).toBe(20);
+    expect(r.printAll(reg)).toBe(`    e1 | *
+    e2 | *
+    e3 | *
+   e1b | e1
+   e2a | e2
+   e2b | e2
+   e3a | e3
+   e3b | e3
+  e1b1 | e1b
+  e2a1 | e2a
+  e2a2 | e2a
+  e2b1 | e2b
+  e2b2 | e2b
+  e3a1 | e3a
+  e3a2 | e3a
+  e3a3 | e3a
+  e3b1 | e3b
+  e3b2 | e3b
+  e3b3 | e3b
+ e3a1a | e3a1
+`);
+
+    removed = r.remove(reg, e1b, false);
+    expect(removed.length).toBe(1);
+    expect(removed).toEqual([{ id: 'e1b' }]);
+    expect(r.size(reg)).toBe(19);
+    expect(r.printAll(reg)).toBe(`    e1 | *
+    e2 | *
+    e3 | *
+   e2a | e2
+   e2b | e2
+   e3a | e3
+   e3b | e3
+  e1b1 | e1
+  e2a1 | e2a
+  e2a2 | e2a
+  e2b1 | e2b
+  e2b2 | e2b
+  e3a1 | e3a
+  e3a2 | e3a
+  e3a3 | e3a
+  e3b1 | e3b
+  e3b2 | e3b
+  e3b3 | e3b
+ e3a1a | e3a1
+`);
+
+    // Remove an entire branch.
+    removed = r.remove(reg, e2, true);
+    expect(removed.length).toBe(7);
+    expect(removed).toEqual([
+      { id: 'e2a1' },
+      { id: 'e2a2' },
+      { id: 'e2a' },
+      { id: 'e2b1' },
+      { id: 'e2b2' },
+      { id: 'e2b' },
+      { id: 'e2' },
+    ]);
+    expect(r.size(reg)).toBe(12);
+    expect(r.printAll(reg)).toBe(`    e1 | *
+    e3 | *
+   e3a | e3
+   e3b | e3
+  e1b1 | e1
+  e3a1 | e3a
+  e3a2 | e3a
+  e3a3 | e3a
+  e3b1 | e3b
+  e3b2 | e3b
+  e3b3 | e3b
+ e3a1a | e3a1
+`);
+
+    // Remove intermediate levels.
+    removed = r.remove(reg, e3, false);
+    expect(removed.length).toBe(1);
+    expect(removed).toEqual([{ id: 'e3' }]);
+    expect(r.size(reg)).toBe(11);
+    expect(r.printAll(reg)).toBe(`    e1 | *
+   e3a | *
+   e3b | *
+  e1b1 | e1
+  e3a1 | e3a
+  e3a2 | e3a
+  e3a3 | e3a
+  e3b1 | e3b
+  e3b2 | e3b
+  e3b3 | e3b
+ e3a1a | e3a1
+`);
+    expect(r.traverseToRoot(reg, e3a1a)).toEqual(['e3a1a', 'e3a1', 'e3a', '*']);
+
+    removed = r.remove(reg, e3a1, false);
+    expect(removed.length).toBe(1);
+    expect(removed).toEqual([{ id: 'e3a1' }]);
+    expect(r.size(reg)).toBe(10);
+    expect(r.printAll(reg)).toBe(`    e1 | *
+   e3a | *
+   e3b | *
+  e1b1 | e1
+  e3a2 | e3a
+  e3a3 | e3a
+  e3b1 | e3b
+  e3b2 | e3b
+  e3b3 | e3b
+ e3a1a | e3a
+`);
+    expect(r.traverseToRoot(reg, e3a1a)).toEqual(['e3a1a', 'e3a', '*']);
   });
 });

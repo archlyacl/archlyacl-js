@@ -45,7 +45,11 @@ export function add(reg: Registry, entity: Entity, parent?: Entity) {
     throw new errors.NotFoundError(parentId);
   }
   reg.register[entityId] = parentId;
-  reg.records[entityId] = entity;
+  if (typeof entity === 'string') {
+    reg.records[entityId] = entity;
+  } else {
+    reg.records[entityId] = Object.assign({}, entity);
+  }
 }
 
 /**
@@ -83,22 +87,6 @@ export function clone(reg: Registry): Registry {
     records,
     register,
   };
-}
-
-/**
- * Prints the traversal path from the entry to the root.
- *
- * @param path - The list representing the path.
- */
-export function display(path: string[]): string {
-  const out = [];
-
-  for (const p of path) {
-    out.push('->');
-    out.push(p);
-  }
-  out.push('|');
-  return out.join(' ');
 }
 
 /**
@@ -169,15 +157,10 @@ export function print(
   starting: Entity,
   lead: string = ''
 ): string {
-  const output: string[] = [];
+  const output: string[] = [`${lead}- ${getValue(starting)}\n`];
 
   const children = getChildIds(reg, starting);
   children.forEach((child) => {
-    const entry = reg.register[child];
-    output.push(lead);
-    output.push('- ');
-    output.push(entry);
-    output.push('\n');
     output.push(print(reg, getRecord(reg, child), lead + '  '));
   });
   return output.join('');

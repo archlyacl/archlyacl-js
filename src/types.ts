@@ -1,5 +1,7 @@
 export const ROOT_ENTITY = '*';
 
-export interface Entity {
+export type Entity = EntityType | string;
+
+export interface EntityType {
   id: string | number;
 }
