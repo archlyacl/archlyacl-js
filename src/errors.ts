@@ -24,7 +24,7 @@ export class InvalidTypeError extends Error {
  * Describes an error when the entity is not found in the registry.
  */
 export class NotFoundError extends Error {
-  constructor(id: string) {
-    super(`Entity "${id}" not in registry.`);
+  constructor(message: string) {
+    super(message);
   }
 }

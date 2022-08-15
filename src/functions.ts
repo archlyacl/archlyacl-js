@@ -27,3 +27,47 @@ export function getValue(entity: Partial<Entity>): string {
   }
   return entity.id;
 }
+
+export function isTraceLevel1(): boolean {
+  if (!process.env.ARCHLY_TRACE_LEVEL) {
+    return false;
+  }
+  const n = parseInt(process.env.ARCHLY_TRACE_LEVEL, 10);
+  if (isNaN(n)) {
+    return false;
+  }
+  return n === 1;
+}
+
+export function isTraceLevel2(): boolean {
+  if (!process.env.ARCHLY_TRACE_LEVEL) {
+    return false;
+  }
+  const n = parseInt(process.env.ARCHLY_TRACE_LEVEL, 10);
+  if (isNaN(n)) {
+    return false;
+  }
+  return n <= 2 && n > 0;
+}
+
+export function isTraceLevel3(): boolean {
+  if (!process.env.ARCHLY_TRACE_LEVEL) {
+    return false;
+  }
+  const n = parseInt(process.env.ARCHLY_TRACE_LEVEL, 10);
+  if (isNaN(n)) {
+    return false;
+  }
+  return n <= 3 && n > 0;
+}
+
+export function isTraceLevel4(): boolean {
+  if (!process.env.ARCHLY_TRACE_LEVEL) {
+    return false;
+  }
+  const n = parseInt(process.env.ARCHLY_TRACE_LEVEL, 10);
+  if (isNaN(n)) {
+    return false;
+  }
+  return n <= 4 && n > 0;
+}

@@ -42,7 +42,7 @@ export function add(reg: Registry, entity: Entity, parent?: Entity) {
 
   const parentId = getValue(parent);
   if (!has(reg, parent)) {
-    throw new errors.NotFoundError(parentId);
+    throw new errors.NotFoundError(`Entity "${parentId}" not in registry.`);
   }
   reg.register[entityId] = parentId;
   if (typeof entity === 'string') {
@@ -63,7 +63,7 @@ export function clear(reg: Registry) {
 }
 
 /**
- * Clones the registry for exporting purposes.
+ * Clones the registry for exporting.
  *
  * @param reg - The Registry object to clone.
  */
@@ -244,7 +244,7 @@ export function remove(
   const removed: Entity[] = [];
   const entityId = getValue(entity);
   if (!has(reg, entity)) {
-    throw new errors.NotFoundError(entityId);
+    throw new errors.NotFoundError(`Entity "${entityId}" not in registry.`);
   }
   if (hasChild(reg, entity)) {
     let parentId = reg.register[entityId];
