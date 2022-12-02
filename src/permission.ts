@@ -42,16 +42,13 @@ export function assign(
   access: Access
 ) {
   const key = _keyFromString(role, resource);
-  if (isTraceLevel3()) {
-    console.debug(`Assign "${prettyPrint(access)}" for ${key}.`);
-  }
   let entry = chart.entries.get(key);
   if (entry) {
     if (isTraceLevel4()) {
       console.debug(
         `Changing "${prettyPrint(entry.access)}" to "${prettyPrint(
           access
-        )}" for ${_keyFromEntry(entry)}`
+        )}" for role "${role}" and resource "${resource}".`
       );
       return entry;
     }
@@ -65,7 +62,11 @@ export function assign(
     resource,
   };
   if (isTraceLevel4()) {
-    console.debug(`Adding "${prettyPrint(entry.access)}" for ${key}`);
+    console.debug(
+      `Adding "${prettyPrint(
+        entry.access
+      )}" for role "${role}" and resource "${resource}".`
+    );
   }
   chart.entries.set(key, entry);
   return entry;
@@ -208,10 +209,7 @@ export function isAllowed(
   if (accessType === 'all') {
     return isAccessAllTrue(entry.access);
   }
-  if (accessType in entry.access) {
-    return entry.access[accessType] === true;
-  }
-  return null;
+  return entry.access[accessType] === true;
 }
 
 export function isDenied(
@@ -246,7 +244,7 @@ export function isDenied(
   return null;
 }
 
-function makeAccessAllowAll(): Access {
+export function makeAccessAllowAll(): Access {
   return {
     create: true,
     delete: true,
@@ -255,7 +253,7 @@ function makeAccessAllowAll(): Access {
   };
 }
 
-function makeAccessDenyAll(): Access {
+export function makeAccessDenyAll(): Access {
   return {
     create: false,
     delete: false,
@@ -282,6 +280,26 @@ export function makeDefaultDeny(chart: Chart) {
   chart.entries.set(_keyFromEntry(ce), ce);
 }
 
+/**
+ * Re-creates the permission chart.
+ *
+ * @param from - The Map that is exported (cloned) previously.
+ */
+export function newFromClone(from: Map<string, ChartEntry>): Chart {
+  return {
+    entries: new Map(from),
+  };
+}
+
+/**
+ * Creates a new set of permissions.
+ */
+export function newPermissions(): Chart {
+  return {
+    entries: new Map<string, ChartEntry>(),
+  };
+}
+
 export function remove(
   chart: Chart,
   role: string,
@@ -301,6 +319,7 @@ export function remove(
     if (isTraceLevel4()) {
       console.debug(`Remove entry ${key} from permissions chart.`);
     }
+    chart.entries.delete(key);
     return null;
   }
   if (isTraceLevel4()) {
@@ -346,18 +365,7 @@ function prettyPrint(acc: Access) {
   } else if (acc.delete === true) {
     output.push('DELETE:true');
   }
-  return output.join(', ') + ' acc';
-}
-
-/**
- * Re-creates the permission chart.
- *
- * @param from - The Map that is exported (cloned) previously.
- */
-export function recreate(from: Map<string, ChartEntry>): Chart {
-  return {
-    entries: new Map(from),
-  };
+  return output.join(', ');
 }
 
 // Reference: https://bobbyhadz.com/blog/typescript-check-if-string-is-in-union-type
@@ -376,7 +384,7 @@ function _keyFromEntry(ce: ChartEntry): string {
 }
 
 function _keyFromString(aro: string, aco: string) {
-  return `${aro}-${aco}`;
+  return `${aro}--${aco}`;
 }
 
 function _subtract(from: Access, types: AccessAllType[]): Access | null {
