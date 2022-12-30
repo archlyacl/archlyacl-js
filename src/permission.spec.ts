@@ -1,4 +1,12 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+  beforeAll,
+  afterAll,
+  afterEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from 'vitest';
 
 import * as errors from './errors';
 import * as permission from './permission';
@@ -815,11 +823,15 @@ describe('Exceptions on removal', () => {
 });
 
 describe('Trace level outputs', () => {
-  const p = permission.newPermissions();
-  const ro1 = 'role-1';
-  const re1 = 'resource-1';
-
   describe('Nonexistent entries', () => {
+    afterAll(() => {
+      process.env.ARCHLY_TRACE_LEVEL = undefined;
+    });
+
+    const p = permission.newPermissions();
+    const ro1 = 'role-1';
+    const re1 = 'resource-1';
+
     test('Trace level 2', () => {
       // Add `mockImplementation` to prevent the output from polluting the output.
       const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
@@ -838,7 +850,7 @@ describe('Trace level outputs', () => {
       const accAll = permission.makeAccessDenyAll();
       permission.assign(p, ro1, re1, accAll);
       expect(spy).toHaveBeenCalledTimes(1);
-      expect(spy).toHaveBeenLastCalledWith(
+      expect(spy).toHaveBeenCalledWith(
         `Adding "ALL:false" for role "${ro1}" and resource "${re1}".`
       );
 
@@ -855,6 +867,115 @@ describe('Trace level outputs', () => {
       expect(spy).toHaveBeenLastCalledWith(
         `Changing "ALL:false" to "READ:true, CREATE:false, UPDATE:true, DELETE:true" for role "${ro1}" and resource "${re1}".`
       );
+    });
+  });
+
+  describe('`assign` function', () => {
+    describe('No trace level set', () => {
+      beforeAll(() => {
+        process.env.ARCHLY_TRACE_LEVEL = undefined;
+      });
+      afterEach(() => {
+        vi.restoreAllMocks();
+      });
+
+      const p = permission.newPermissions();
+      const ro1 = 'role-1';
+      const re1 = 'resource-1';
+      const accAllAllow = permission.makeAccessAllowAll();
+      const accAllDeny = permission.makeAccessDenyAll();
+
+      permission.makeDefaultAccess(p);
+
+      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+      test(`First assign`, () => {
+        let entry = permission.assign(p, ro1, re1, accAllAllow);
+        expect(spy).toHaveBeenCalledTimes(0);
+        expect(entry).toEqual({
+          access: {
+            create: true,
+            delete: true,
+            read: true,
+            update: true,
+          },
+          role: ro1,
+          resource: re1,
+        });
+      });
+
+      test('Subsequent assign', () => {
+        let entry = permission.assign(p, ro1, re1, accAllDeny);
+        expect(spy).toHaveBeenCalledTimes(0);
+        expect(entry).toEqual({
+          access: {
+            create: false,
+            delete: false,
+            read: false,
+            update: false,
+          },
+          role: ro1,
+          resource: re1,
+        });
+      });
+    });
+
+    describe('Trace level 4', () => {
+      beforeAll(() => {
+        process.env.ARCHLY_TRACE_LEVEL = '4';
+      });
+      afterEach(() => {
+        vi.restoreAllMocks();
+      });
+      afterAll(() => {
+        process.env.ARCHLY_TRACE_LEVEL = undefined;
+      });
+
+      const p = permission.newPermissions();
+      const ro1 = 'role-1';
+      const re1 = 'resource-1';
+      const accAllAllow = permission.makeAccessAllowAll();
+      const accAllDeny = permission.makeAccessDenyAll();
+
+      permission.makeDefaultAccess(p);
+
+      test(`First assign`, () => {
+        const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+        let entry = permission.assign(p, ro1, re1, accAllAllow);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(
+          `Adding "ALL:true" for role "${ro1}" and resource "${re1}".`
+        );
+        expect(entry).toEqual({
+          access: {
+            create: true,
+            delete: true,
+            read: true,
+            update: true,
+          },
+          role: ro1,
+          resource: re1,
+        });
+      });
+
+      test('Subsequent assign', () => {
+        const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+        let entry = permission.assign(p, ro1, re1, accAllDeny);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenLastCalledWith(
+          `Changing "ALL:true" to "ALL:false" for role "${ro1}" and resource "${re1}".`
+        );
+        expect(entry).toEqual({
+          access: {
+            create: false,
+            delete: false,
+            read: false,
+            update: false,
+          },
+          role: ro1,
+          resource: re1,
+        });
+      });
     });
   });
 });

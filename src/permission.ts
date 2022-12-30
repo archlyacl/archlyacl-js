@@ -50,7 +50,6 @@ export function assign(
           access
         )}" for role "${role}" and resource "${resource}".`
       );
-      return entry;
     }
     entry.access = access;
     chart.entries.set(key, entry);
