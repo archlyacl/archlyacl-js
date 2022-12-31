@@ -36,7 +36,7 @@ export function isTraceLevel1(): boolean {
   if (isNaN(n)) {
     return false;
   }
-  return n === 1;
+  return n >= 1;
 }
 
 export function isTraceLevel2(): boolean {

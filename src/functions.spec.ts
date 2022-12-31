@@ -1,6 +1,12 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, afterAll } from 'vitest';
 import { InvalidTypeError } from './errors';
-import { getValue } from './functions';
+import {
+  getValue,
+  isTraceLevel1,
+  isTraceLevel2,
+  isTraceLevel3,
+  isTraceLevel4,
+} from './functions';
 
 describe('getValue', () => {
   class Player {
@@ -115,5 +121,58 @@ describe('getValue', () => {
     expect(() => {
       getValue({});
     }).toThrow(InvalidTypeError);
+  });
+});
+
+describe('isTraceLevel', () => {
+  afterAll(() => {
+    process.env.ARCHLY_TRACE_LEVEL = undefined;
+  });
+
+  test('no trace level set', () => {
+    expect(isTraceLevel1()).toBe(false);
+    expect(isTraceLevel2()).toBe(false);
+    expect(isTraceLevel3()).toBe(false);
+    expect(isTraceLevel4()).toBe(false);
+  });
+
+  test('trace level 1', () => {
+    process.env.ARCHLY_TRACE_LEVEL = '1';
+    expect(isTraceLevel1()).toBe(true);
+    expect(isTraceLevel2()).toBe(false);
+    expect(isTraceLevel3()).toBe(false);
+    expect(isTraceLevel4()).toBe(false);
+  });
+
+  test('trace level 2', () => {
+    process.env.ARCHLY_TRACE_LEVEL = '2';
+    expect(isTraceLevel1()).toBe(true);
+    expect(isTraceLevel2()).toBe(true);
+    expect(isTraceLevel3()).toBe(false);
+    expect(isTraceLevel4()).toBe(false);
+  });
+
+  test('trace level 3', () => {
+    process.env.ARCHLY_TRACE_LEVEL = '3';
+    expect(isTraceLevel1()).toBe(true);
+    expect(isTraceLevel2()).toBe(true);
+    expect(isTraceLevel3()).toBe(true);
+    expect(isTraceLevel4()).toBe(false);
+  });
+
+  test('trace level 4', () => {
+    process.env.ARCHLY_TRACE_LEVEL = '4';
+    expect(isTraceLevel1()).toBe(true);
+    expect(isTraceLevel2()).toBe(true);
+    expect(isTraceLevel3()).toBe(true);
+    expect(isTraceLevel4()).toBe(true);
+  });
+
+  test('invalid trace level', () => {
+    process.env.ARCHLY_TRACE_LEVEL = 'a';
+    expect(isTraceLevel1()).toBe(false);
+    expect(isTraceLevel2()).toBe(false);
+    expect(isTraceLevel3()).toBe(false);
+    expect(isTraceLevel4()).toBe(false);
   });
 });
