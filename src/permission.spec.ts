@@ -1,12 +1,4 @@
-import {
-  beforeAll,
-  afterAll,
-  afterEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from 'vitest';
+import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest';
 
 import * as errors from './errors';
 import * as permission from './permission';
@@ -824,49 +816,37 @@ describe('Exceptions on removal', () => {
 
 describe('Trace level outputs', () => {
   describe('Nonexistent entries', () => {
-    afterAll(() => {
-      process.env.ARCHLY_TRACE_LEVEL = undefined;
-    });
+    describe('Trace level 2', () => {
+      beforeAll(() => {
+        process.env.ARCHLY_TRACE_LEVEL = '2';
+      });
+      afterAll(() => {
+        process.env.ARCHLY_TRACE_LEVEL = undefined;
+      });
 
-    const p = permission.newPermissions();
-    const ro1 = 'role-1';
-    const re1 = 'resource-1';
+      const p = permission.newPermissions();
+      const ro1 = 'role-1';
+      const re1 = 'resource-1';
 
-    test('Trace level 2', () => {
-      // Add `mockImplementation` to prevent the output from polluting the output.
-      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-      process.env.ARCHLY_TRACE_LEVEL = '2';
-      expect(permission.isAllowed(p, ro1, re1, 'all')).toBeNull();
-      expect(spy).toHaveBeenCalledTimes(1);
-      expect(spy).toHaveBeenCalledWith(
-        `Permission chart does not contain role "${ro1}" and resource "${re1}".`
-      );
-    });
+      test('isAllowed', () => {
+        // Add `mockImplementation` to prevent the output from polluting the output.
+        const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
-    test('Trace level 4', () => {
-      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-      process.env.ARCHLY_TRACE_LEVEL = '4';
+        expect(permission.isAllowed(p, ro1, re1, 'all')).toBeNull();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(
+          `Permission chart does not contain role "${ro1}" and resource "${re1}".`
+        );
+      });
 
-      const accAll = permission.makeAccessDenyAll();
-      permission.assign(p, ro1, re1, accAll);
-      expect(spy).toHaveBeenCalledTimes(1);
-      expect(spy).toHaveBeenCalledWith(
-        `Adding "ALL:false" for role "${ro1}" and resource "${re1}".`
-      );
-
-      expect(permission.isAllowed(p, ro1, re1, 'all'));
-      expect(spy).toHaveBeenCalledTimes(2);
-      expect(spy).toHaveBeenLastCalledWith(
-        `Permission chart contains ALL:false for role "${ro1}" and resource "${re1}".`
-      );
-
-      const accNoCreate = permission.makeAccessAllowAll();
-      accNoCreate.create = false;
-      permission.assign(p, ro1, re1, accNoCreate);
-      expect(spy).toHaveBeenCalledTimes(3);
-      expect(spy).toHaveBeenLastCalledWith(
-        `Changing "ALL:false" to "READ:true, CREATE:false, UPDATE:true, DELETE:true" for role "${ro1}" and resource "${re1}".`
-      );
+      test('isDenied', () => {
+        const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+        expect(permission.isDenied(p, ro1, re1, 'all')).toBeNull();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(
+          `Permission chart does not contain role "${ro1}" and resource "${re1}".`
+        );
+      });
     });
   });
 
@@ -874,9 +854,6 @@ describe('Trace level outputs', () => {
     describe('No trace level set', () => {
       beforeAll(() => {
         process.env.ARCHLY_TRACE_LEVEL = undefined;
-      });
-      afterEach(() => {
-        vi.restoreAllMocks();
       });
 
       const p = permission.newPermissions();
@@ -887,9 +864,9 @@ describe('Trace level outputs', () => {
 
       permission.makeDefaultAccess(p);
 
-      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-
       test(`First assign`, () => {
+        const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
         let entry = permission.assign(p, ro1, re1, accAllAllow);
         expect(spy).toHaveBeenCalledTimes(0);
         expect(entry).toEqual({
@@ -905,6 +882,8 @@ describe('Trace level outputs', () => {
       });
 
       test('Subsequent assign', () => {
+        const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
         let entry = permission.assign(p, ro1, re1, accAllDeny);
         expect(spy).toHaveBeenCalledTimes(0);
         expect(entry).toEqual({
@@ -923,9 +902,6 @@ describe('Trace level outputs', () => {
     describe('Trace level 4', () => {
       beforeAll(() => {
         process.env.ARCHLY_TRACE_LEVEL = '4';
-      });
-      afterEach(() => {
-        vi.restoreAllMocks();
       });
       afterAll(() => {
         process.env.ARCHLY_TRACE_LEVEL = undefined;
@@ -956,6 +932,12 @@ describe('Trace level outputs', () => {
           role: ro1,
           resource: re1,
         });
+
+        expect(permission.isAllowed(p, ro1, re1, 'all')).toBe(true);
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenLastCalledWith(
+          `Permission chart contains ALL:true for role "${ro1}" and resource "${re1}".`
+        );
       });
 
       test('Subsequent assign', () => {
@@ -975,6 +957,12 @@ describe('Trace level outputs', () => {
           role: ro1,
           resource: re1,
         });
+
+        expect(permission.isDenied(p, ro1, re1, 'all')).toBe(true);
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenLastCalledWith(
+          `Permission chart contains ALL:false for role "${ro1}" and resource "${re1}".`
+        );
       });
     });
   });

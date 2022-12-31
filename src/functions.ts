@@ -47,7 +47,7 @@ export function isTraceLevel2(): boolean {
   if (isNaN(n)) {
     return false;
   }
-  return n <= 2 && n > 0;
+  return n >= 2;
 }
 
 export function isTraceLevel3(): boolean {
@@ -58,7 +58,7 @@ export function isTraceLevel3(): boolean {
   if (isNaN(n)) {
     return false;
   }
-  return n <= 3 && n > 0;
+  return n >= 3;
 }
 
 export function isTraceLevel4(): boolean {
@@ -69,5 +69,5 @@ export function isTraceLevel4(): boolean {
   if (isNaN(n)) {
     return false;
   }
-  return n <= 4 && n > 0;
+  return n >= 4;
 }
