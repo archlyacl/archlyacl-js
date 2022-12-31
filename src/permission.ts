@@ -237,10 +237,7 @@ export function isDenied(
   if (accessType === 'all') {
     return isAccessAllFalse(entry.access);
   }
-  if (accessType in entry.access) {
-    return entry.access[accessType] === false;
-  }
-  return null;
+  return entry.access[accessType] === false;
 }
 
 export function makeAccessAllowAll(): Access {
@@ -331,7 +328,7 @@ export function remove(
   return entry;
 }
 
-function prettyPrint(acc: Access) {
+export function prettyPrint(acc: Access) {
   if (acc.create && acc.delete && acc.read && acc.update) {
     return 'ALL:true';
   }
@@ -368,15 +365,15 @@ function prettyPrint(acc: Access) {
 }
 
 // Reference: https://bobbyhadz.com/blog/typescript-check-if-string-is-in-union-type
-function _isAccessAllType(s: string): s is AccessAllType {
-  if (s === 'all') {
-    return true;
-  }
-  if (ACCESS_TYPES.includes(s)) {
-    return true;
-  }
-  return false;
-}
+// function _isAccessAllType(s: string): s is AccessAllType {
+//   if (s === 'all') {
+//     return true;
+//   }
+//   if (ACCESS_TYPES.includes(s)) {
+//     return true;
+//   }
+//   return false;
+// }
 
 function _keyFromEntry(ce: ChartEntry): string {
   return _keyFromString(ce.role, ce.resource);

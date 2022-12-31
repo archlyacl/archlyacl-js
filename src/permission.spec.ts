@@ -1044,4 +1044,67 @@ describe('Code coverage', () => {
     expect(permission.getRoles(p).size).toBe(0);
     expect(permission.getResources(p).size).toBe(0);
   });
+
+  test('prettyPrint', () => {
+    const cases: { accesses: permission.Access; be: string }[] = [
+      {
+        accesses: {
+          create: true,
+          delete: true,
+          read: true,
+          update: true,
+        },
+        be: 'ALL:true',
+      },
+      {
+        accesses: {
+          create: true,
+          delete: true,
+          read: false,
+          update: true,
+        },
+        be: 'READ:false, CREATE:true, UPDATE:true, DELETE:true',
+      },
+      {
+        accesses: {
+          create: false,
+          delete: true,
+          read: false,
+          update: true,
+        },
+        be: 'READ:false, CREATE:false, UPDATE:true, DELETE:true',
+      },
+      {
+        accesses: {
+          create: false,
+          delete: true,
+          read: false,
+          update: false,
+        },
+        be: 'READ:false, CREATE:false, UPDATE:false, DELETE:true',
+      },
+      {
+        accesses: {
+          create: false,
+          delete: false,
+          read: false,
+          update: false,
+        },
+        be: 'ALL:false',
+      },
+      {
+        accesses: {
+          create: false,
+          delete: false,
+          read: true,
+          update: false,
+        },
+        be: 'READ:true, CREATE:false, UPDATE:false, DELETE:false',
+      },
+    ];
+
+    for (const c of cases) {
+      expect(permission.prettyPrint(c.accesses)).toBe(c.be);
+    }
+  });
 });
