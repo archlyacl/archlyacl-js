@@ -801,19 +801,6 @@ describe('Removal of allow/deny', () => {
   });
 });
 
-describe('Exceptions on removal', () => {
-  const ro1 = 'role-1';
-  const re1 = 'resource-1';
-  describe('Removal of non-existing permissions', () => {
-    test('Deny nonexistent ro1 on re1', () => {
-      expect(() => {
-        const p = permission.newPermissions();
-        permission.remove(p, ro1, re1, ['all']);
-      }).toThrow(errors.NotFoundError);
-    });
-  });
-});
-
 describe('Trace level outputs', () => {
   describe('Nonexistent entries', () => {
     describe('Trace level 2', () => {
@@ -964,6 +951,63 @@ describe('Trace level outputs', () => {
           `Permission chart contains ALL:false for role "${ro1}" and resource "${re1}".`
         );
       });
+    });
+  });
+
+  describe('`remove` function', () => {
+    beforeAll(() => {
+      process.env.ARCHLY_TRACE_LEVEL = '4';
+    });
+    afterAll(() => {
+      process.env.ARCHLY_TRACE_LEVEL = undefined;
+    });
+
+    const ro1 = 'role-1';
+    const re1 = 'resource-1';
+    const accAllAllow = permission.makeAccessAllowAll();
+
+    test('entry not found', () => {
+      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      expect(() => {
+        const p = permission.newPermissions();
+        permission.remove(p, ro1, re1, ['all']);
+      }).toThrow(errors.NotFoundError);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith(`Remove "all" for ${ro1}--${re1}.`);
+    });
+
+    test('entry found - ALL access', () => {
+      const p = permission.newPermissions();
+      permission.assign(p, ro1, re1, accAllAllow);
+
+      const spy = vi.spyOn(console, 'debug');
+      let entry = permission.remove(p, ro1, re1, ['all']);
+      expect(entry).toBeNull();
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenCalledWith(`Remove "all" for ${ro1}--${re1}.`);
+    });
+
+    test('entry found - DELETE access', () => {
+      const p = permission.newPermissions();
+      permission.assign(p, ro1, re1, accAllAllow);
+
+      const spy = vi.spyOn(console, 'debug');
+      let entry = permission.remove(p, ro1, re1, ['delete']);
+      expect(entry).toEqual({
+        access: {
+          create: true,
+          delete: true,
+          read: true,
+          update: true,
+        },
+        role: ro1,
+        resource: re1,
+      });
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenCalledWith(`Remove "delete" for ${ro1}--${re1}.`);
+      expect(spy).toHaveBeenCalledWith(
+        `Reducing "ALL:true" to "READ:true, CREATE:true, UPDATE:true" for ${ro1}--${re1}`
+      );
     });
   });
 });

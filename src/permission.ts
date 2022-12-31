@@ -392,7 +392,7 @@ function _subtract(from: Access, types: AccessAllType[]): Access | null {
   }
   const access: Access = {};
   for (const [k, v] of Object.entries(from)) {
-    if (types.includes(k)) {
+    if (!types.includes(k)) {
       access[k] = v;
     }
   }
