@@ -801,6 +801,82 @@ describe('Removal of allow/deny', () => {
   });
 });
 
+describe('Removal by resource', () => {
+  describe(`Removal of ALLOW access`, () => {
+    const p = permission.newPermissions();
+    const re1 = 'resource-1';
+    const re2 = 'resource-2';
+    const re3 = 'resource-3';
+    const ro1 = 'role-1';
+    const ro2 = 'role-2';
+    const ro3 = 'role-3';
+    const accAllAllow = permission.makeAccessAllowAll();
+
+    // Add the roles and resources.
+    permission.makeDefaultAccess(p);
+    permission.assign(p, ro1, re1, accAllAllow);
+    permission.assign(p, ro2, re1, accAllAllow);
+    permission.assign(p, ro3, re1, accAllAllow);
+    permission.assign(p, ro1, re2, accAllAllow);
+    permission.assign(p, ro2, re2, accAllAllow);
+    permission.assign(p, ro3, re2, accAllAllow);
+    permission.assign(p, ro1, re3, accAllAllow);
+    permission.assign(p, ro2, re3, accAllAllow);
+    permission.assign(p, ro3, re3, accAllAllow);
+
+    test('Initial state', () => {
+      expect(permission.size(p)).toBe(10);
+    });
+
+    test(`Removal of ALL access on ${re1}`, () => {
+      permission.removeByResource(p, re1, ['all']);
+      expect(permission.size(p)).toBe(7);
+    });
+
+    test(`Removal of DELETE access on ${re1}`, () => {
+      permission.removeByResource(p, re2, ['delete']);
+      expect(permission.size(p)).toBe(7); // Remains the same size.
+    });
+  });
+
+  describe(`Removal of DENY access`, () => {
+    const p = permission.newPermissions();
+    const re1 = 'resource-1';
+    const re2 = 'resource-2';
+    const re3 = 'resource-3';
+    const ro1 = 'role-1';
+    const ro2 = 'role-2';
+    const ro3 = 'role-3';
+    const accAllDeny = permission.makeAccessDenyAll();
+
+    // Add the roles and resources.
+    permission.makeDefaultAccess(p);
+    permission.assign(p, ro1, re1, accAllDeny);
+    permission.assign(p, ro2, re1, accAllDeny);
+    permission.assign(p, ro3, re1, accAllDeny);
+    permission.assign(p, ro1, re2, accAllDeny);
+    permission.assign(p, ro2, re2, accAllDeny);
+    permission.assign(p, ro3, re2, accAllDeny);
+    permission.assign(p, ro1, re3, accAllDeny);
+    permission.assign(p, ro2, re3, accAllDeny);
+    permission.assign(p, ro3, re3, accAllDeny);
+
+    test('Initial state', () => {
+      expect(permission.size(p)).toBe(10);
+    });
+
+    test(`Removal of ALL access on ${re1}`, () => {
+      permission.removeByResource(p, re1, ['all']);
+      expect(permission.size(p)).toBe(7);
+    });
+
+    test(`Removal of DELETE access on ${re1}`, () => {
+      permission.removeByResource(p, re2, ['delete']);
+      expect(permission.size(p)).toBe(7); // Remains the same size.
+    });
+  });
+});
+
 describe('Trace level outputs', () => {
   describe('Nonexistent entries', () => {
     describe('Trace level 2', () => {
@@ -1008,6 +1084,31 @@ describe('Trace level outputs', () => {
       expect(spy).toHaveBeenCalledWith(
         `Reducing "ALL:true" to "READ:true, CREATE:true, UPDATE:true" for ${ro1}--${re1}`
       );
+    });
+  });
+
+  describe('`removeBy` functions', () => {
+    beforeAll(() => {
+      process.env.ARCHLY_TRACE_LEVEL = '3';
+    });
+    afterAll(() => {
+      process.env.ARCHLY_TRACE_LEVEL = undefined;
+    });
+
+    const ro1 = 'role-1';
+    const re1 = 'resource-1';
+    const accAllAllow = permission.makeAccessAllowAll();
+
+    test('entry found', () => {
+      const p = permission.newPermissions();
+      permission.makeDefaultAccess(p);
+      permission.assign(p, ro1, re1, accAllAllow);
+
+      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      permission.removeByResource(p, re1, ['all']);
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenCalledWith(`Remove "all" for resource "${re1}".`);
+      expect(spy).toHaveBeenCalledWith(`Remove "all" for ${ro1}--${re1}.`);
     });
   });
 });

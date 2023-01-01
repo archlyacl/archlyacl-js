@@ -181,6 +181,7 @@ export function isAccessAllTrue(a: Access): boolean {
  * @param chart - The Chart object.
  * @param role - The ID of the access request object.
  * @param resource - The ID of the access control object.
+ * @param accessType - The type of access to check for.
  */
 export function isAllowed(
   chart: Chart,
@@ -211,6 +212,14 @@ export function isAllowed(
   return entry.access[accessType] === true;
 }
 
+/**
+ * Determines if the role is denied access on the resource.
+ *
+ * @param chart - The Chart object.
+ * @param role - The ID of the access request object.
+ * @param resource - The ID of the access control object.
+ * @param accessType - The type of access to check for.
+ */
 export function isDenied(
   chart: Chart,
   role: string,
@@ -240,6 +249,9 @@ export function isDenied(
   return entry.access[accessType] === false;
 }
 
+/**
+ * Creates an access object with all access granted.
+ */
 export function makeAccessAllowAll(): Access {
   return {
     create: true,
@@ -249,6 +261,9 @@ export function makeAccessAllowAll(): Access {
   };
 }
 
+/**
+ * Creates an access object with all access denied.
+ */
 export function makeAccessDenyAll(): Access {
   return {
     create: false,
@@ -258,6 +273,11 @@ export function makeAccessDenyAll(): Access {
   };
 }
 
+/**
+ * Modifies the Chart to have default access granted.
+ *
+ * @param chart - The Chart object.
+ */
 export function makeDefaultAccess(chart: Chart) {
   const ce: ChartEntry = {
     access: makeAccessAllowAll(),
@@ -267,6 +287,11 @@ export function makeDefaultAccess(chart: Chart) {
   chart.entries.set(_keyFromEntry(ce), ce);
 }
 
+/**
+ * Modifies the Chart to have default access denied.
+ *
+ * @param chart - The Chart object.
+ */
 export function makeDefaultDeny(chart: Chart) {
   const ce: ChartEntry = {
     access: makeAccessDenyAll(),
@@ -296,6 +321,14 @@ export function newPermissions(): Chart {
   };
 }
 
+/**
+ * Removes a specific set of permissions on the resource from the role.
+ *
+ * @param chart - The Chart object.
+ * @param role - The ID of the access request object.
+ * @param resource - The ID of the access control object.
+ * @param removeTypes - The types of access to remove.
+ */
 export function remove(
   chart: Chart,
   role: string,
@@ -328,7 +361,50 @@ export function remove(
   return entry;
 }
 
-export function prettyPrint(acc: Access) {
+/**
+ * Removes a specific set of permissions on the resource for all roles.
+ *
+ * @param chart - The Chart object.
+ * @param resource - The ID of the access control object.
+ * @param removeTypes - The types of access to remove.
+ */
+export function removeByResource(
+  chart: Chart,
+  resource: string,
+  removeTypes: AccessAllType[]
+) {
+  if (isTraceLevel3()) {
+    console.debug(
+      `Remove "${removeTypes.join(', ')}" for resource "${resource}".`
+    );
+  }
+  for (const entry of chart.entries.values()) {
+    if (entry.resource === resource) {
+      remove(chart, entry.role, resource, removeTypes);
+    }
+  }
+}
+
+// export function removeByRole()
+
+/**
+ * The number of specified permissions.
+ *
+ * @param chart The Chart object.
+ */
+export function size(chart: Chart) {
+  return chart.entries.size;
+}
+
+/**
+ * Creates a human-friendly version of the access permissions.
+ *
+ * If all the permissions are true or false, returns either `ALL:true` or `ALL:false` respectively.
+ *
+ * Otherwise, the return value contains the keys `READ`, `CREATE`, `UPDATE` and `DELETE` in that order with values `true` or `false`.
+ * @param acc - The access permissions.
+ */
+export function prettyPrint(acc: Access): string {
   if (acc.create && acc.delete && acc.read && acc.update) {
     return 'ALL:true';
   }
