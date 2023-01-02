@@ -246,7 +246,10 @@ export function isDenied(
   if (accessType === 'all') {
     return isAccessAllFalse(entry.access);
   }
-  return entry.access[accessType] === false;
+  if (accessType in entry.access) {
+    return entry.access[accessType] === false;
+  }
+  return null;
 }
 
 /**
@@ -358,6 +361,8 @@ export function remove(
       )}" for ${key}`
     );
   }
+  entry.access = newAccess;
+  chart.entries.set(key, entry);
   return entry;
 }
 
@@ -438,6 +443,22 @@ export function prettyPrint(acc: Access): string {
     output.push('DELETE:true');
   }
   return output.join(', ');
+}
+
+/**
+ * Creates a textual output illustrating the permissions recorded in the Chart.
+ *
+ * @param chart - The Chart object.
+ */
+export function visualize(chart: Chart) {
+  const out = [];
+
+  for (const [key, entry] of chart.entries.entries()) {
+    out.push(key);
+    out.push(`  ${prettyPrint(entry.access)}`);
+  }
+
+  return out.join('\n');
 }
 
 // Reference: https://bobbyhadz.com/blog/typescript-check-if-string-is-in-union-type

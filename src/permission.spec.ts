@@ -570,59 +570,123 @@ describe('Removal of allow/deny', () => {
     });
     //-- Whole section above duplicated from "BA2: allow() all permissions with default allow"
 
-    test('(RA3) Remove ro1 on re0', () => {
-      permission.remove(p, ro1, re0, ['all']);
+    test(`Change then delete specific permission`, () => {
+      // Change `delete` to false.
+      permission.assign(p, ro1, re1, {
+        read: true,
+        create: true,
+        update: true,
+        delete: false,
+      });
+
+      expect(permission.size(p)).toBe(4);
 
       expect(permission.isAllowed(p, ro0, re0, 'all')).toBe(true);
       expect(permission.isDenied(p, ro0, re0, 'all')).toBe(false);
       expect(permission.isAllowed(p, ro0, re1, 'all')).toBe(true);
       expect(permission.isDenied(p, ro0, re1, 'all')).toBe(false);
-      expect(permission.isAllowed(p, ro1, re0, 'all')).toBeNull();
-      expect(permission.isDenied(p, ro1, re0, 'all')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re1, 'all')).toBe(true);
+      expect(permission.isAllowed(p, ro1, re0, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'all')).toBe(false); // False because `delete` is changed.
       expect(permission.isDenied(p, ro1, re1, 'all')).toBe(false);
 
-      expect(permission.isAllowed(p, ro0, re0, 'create')).toBe(true);
-      expect(permission.isDenied(p, ro0, re0, 'create')).toBe(false);
-      expect(permission.isAllowed(p, ro0, re1, 'create')).toBe(true);
-      expect(permission.isDenied(p, ro0, re1, 'create')).toBe(false);
-      expect(permission.isAllowed(p, ro1, re0, 'create')).toBeNull();
-      expect(permission.isDenied(p, ro1, re0, 'create')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re1, 'create')).toBe(true);
-      expect(permission.isDenied(p, ro1, re1, 'create')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re0, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro0, re0, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro0, re1, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re0, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'delete')).toBe(false);
+      expect(permission.isDenied(p, ro1, re1, 'delete')).toBe(true);
+
+      // Then remove the permission on `delete`.
+      permission.remove(p, ro1, re1, ['delete']);
+
+      // Number of entries should remain the same.
+      expect(permission.size(p)).toBe(4);
+
+      expect(permission.isAllowed(p, ro0, re0, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro0, re0, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro0, re1, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re0, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'all')).toBe(false); // False because `delete` is removed.
+      expect(permission.isDenied(p, ro1, re1, 'all')).toBe(false);
+
+      expect(permission.isAllowed(p, ro0, re0, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro0, re0, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro0, re1, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re0, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'delete')).toBe(false);
+      expect(permission.isDenied(p, ro1, re1, 'delete')).toBeNull();
+    });
+
+    // Then remove 'all' permission.
+    test('(RA1) Remove ro1 on re1', () => {
+      permission.remove(p, ro1, re1, ['all']);
+
+      // Number of entries should reduce by 1.
+      expect(permission.size(p)).toBe(3);
+
+      expect(permission.isAllowed(p, ro0, re0, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro0, re0, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro0, re1, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re0, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'all')).toBeNull(); // Null because permission is removed.
+      expect(permission.isDenied(p, ro1, re1, 'all')).toBeNull(); // Null because permission is removed.
+
+      expect(permission.isAllowed(p, ro0, re0, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro0, re0, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro0, re1, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re0, 'delete')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'delete')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'delete')).toBeNull(); // Null because permission is removed.
+      expect(permission.isDenied(p, ro1, re1, 'delete')).toBeNull(); // Null because permission is removed.
     });
 
     test('(RA2) Remove ro0 on re1', () => {
       permission.remove(p, ro0, re1, ['all']);
 
+      // Number of entries should reduce by 1.
+      expect(permission.size(p)).toBe(2);
+
       expect(permission.isAllowed(p, ro0, re0, 'all')).toBe(true);
       expect(permission.isDenied(p, ro0, re0, 'all')).toBe(false);
-      expect(permission.isAllowed(p, ro0, re1, 'all')).toBeNull();
-      expect(permission.isDenied(p, ro0, re1, 'all')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re0, 'all')).toBeNull();
-      expect(permission.isDenied(p, ro1, re0, 'all')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re1, 'all')).toBe(true);
-      expect(permission.isDenied(p, ro1, re1, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'all')).toBeNull(); // Null because permission is removed.
+      expect(permission.isDenied(p, ro0, re1, 'all')).toBeNull(); // Null because permission is removed.
+      expect(permission.isAllowed(p, ro1, re0, 'all')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'all')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'all')).toBeNull();
+      expect(permission.isDenied(p, ro1, re1, 'all')).toBeNull();
 
       expect(permission.isAllowed(p, ro0, re0, 'create')).toBe(true);
       expect(permission.isDenied(p, ro0, re0, 'create')).toBe(false);
-      expect(permission.isAllowed(p, ro0, re1, 'create')).toBeNull();
-      expect(permission.isDenied(p, ro0, re1, 'create')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re0, 'create')).toBeNull();
-      expect(permission.isDenied(p, ro1, re0, 'create')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re1, 'create')).toBe(true);
-      expect(permission.isDenied(p, ro1, re1, 'create')).toBe(false);
+      expect(permission.isAllowed(p, ro0, re1, 'create')).toBeNull(); // Null because permission is removed.
+      expect(permission.isDenied(p, ro0, re1, 'create')).toBeNull(); // Null because permission is removed.
+      expect(permission.isAllowed(p, ro1, re0, 'create')).toBe(true);
+      expect(permission.isDenied(p, ro1, re0, 'create')).toBe(false);
+      expect(permission.isAllowed(p, ro1, re1, 'create')).toBeNull();
+      expect(permission.isDenied(p, ro1, re1, 'create')).toBeNull();
     });
 
-    test('(RA1) Remove ro1 on re1', () => {
-      permission.remove(p, ro1, re1, ['all']);
+    test('(RA3) Remove ro1 on re0', () => {
+      permission.remove(p, ro1, re0, ['all']);
+
+      // Number of entries should reduce by 1.
+      expect(permission.size(p)).toBe(1);
 
       expect(permission.isAllowed(p, ro0, re0, 'all')).toBe(true);
       expect(permission.isDenied(p, ro0, re0, 'all')).toBe(false);
       expect(permission.isAllowed(p, ro0, re1, 'all')).toBeNull();
       expect(permission.isDenied(p, ro0, re1, 'all')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re0, 'all')).toBeNull();
-      expect(permission.isDenied(p, ro1, re0, 'all')).toBeNull();
+      expect(permission.isAllowed(p, ro1, re0, 'all')).toBeNull(); // Null because permission is removed.
+      expect(permission.isDenied(p, ro1, re0, 'all')).toBeNull(); // Null because permission is removed.
       expect(permission.isAllowed(p, ro1, re1, 'all')).toBeNull();
       expect(permission.isDenied(p, ro1, re1, 'all')).toBeNull();
 
@@ -630,8 +694,8 @@ describe('Removal of allow/deny', () => {
       expect(permission.isDenied(p, ro0, re0, 'create')).toBe(false);
       expect(permission.isAllowed(p, ro0, re1, 'create')).toBeNull();
       expect(permission.isDenied(p, ro0, re1, 'create')).toBeNull();
-      expect(permission.isAllowed(p, ro1, re0, 'create')).toBeNull();
-      expect(permission.isDenied(p, ro1, re0, 'create')).toBeNull();
+      expect(permission.isAllowed(p, ro1, re0, 'create')).toBeNull(); // Null because permission is removed.
+      expect(permission.isDenied(p, ro1, re0, 'create')).toBeNull(); // Null because permission is removed.
       expect(permission.isAllowed(p, ro1, re1, 'create')).toBeNull();
       expect(permission.isDenied(p, ro1, re1, 'create')).toBeNull();
     });
@@ -826,16 +890,70 @@ describe('Removal by resource', () => {
 
     test('Initial state', () => {
       expect(permission.size(p)).toBe(10);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-1
+  ALL:true
+role-2--resource-1
+  ALL:true
+role-3--resource-1
+  ALL:true
+role-1--resource-2
+  ALL:true
+role-2--resource-2
+  ALL:true
+role-3--resource-2
+  ALL:true
+role-1--resource-3
+  ALL:true
+role-2--resource-3
+  ALL:true
+role-3--resource-3
+  ALL:true`);
     });
 
     test(`Removal of ALL access on ${re1}`, () => {
       permission.removeByResource(p, re1, ['all']);
       expect(permission.size(p)).toBe(7);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-2
+  ALL:true
+role-2--resource-2
+  ALL:true
+role-3--resource-2
+  ALL:true
+role-1--resource-3
+  ALL:true
+role-2--resource-3
+  ALL:true
+role-3--resource-3
+  ALL:true`);
     });
 
-    test(`Removal of DELETE access on ${re1}`, () => {
-      permission.removeByResource(p, re2, ['delete']);
+    test(`Removal of UPDATE access on ${re1}`, () => {
+      permission.removeByResource(p, re2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-2
+  READ:true, CREATE:true, DELETE:true
+role-2--resource-2
+  READ:true, CREATE:true, DELETE:true
+role-3--resource-2
+  READ:true, CREATE:true, DELETE:true
+role-1--resource-3
+  ALL:true
+role-2--resource-3
+  ALL:true
+role-3--resource-3
+  ALL:true`);
     });
   });
 
@@ -863,16 +981,70 @@ describe('Removal by resource', () => {
 
     test('Initial state', () => {
       expect(permission.size(p)).toBe(10);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-1
+  ALL:false
+role-2--resource-1
+  ALL:false
+role-3--resource-1
+  ALL:false
+role-1--resource-2
+  ALL:false
+role-2--resource-2
+  ALL:false
+role-3--resource-2
+  ALL:false
+role-1--resource-3
+  ALL:false
+role-2--resource-3
+  ALL:false
+role-3--resource-3
+  ALL:false`);
     });
 
     test(`Removal of ALL access on ${re1}`, () => {
       permission.removeByResource(p, re1, ['all']);
       expect(permission.size(p)).toBe(7);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-2
+  ALL:false
+role-2--resource-2
+  ALL:false
+role-3--resource-2
+  ALL:false
+role-1--resource-3
+  ALL:false
+role-2--resource-3
+  ALL:false
+role-3--resource-3
+  ALL:false`);
     });
 
-    test(`Removal of DELETE access on ${re1}`, () => {
-      permission.removeByResource(p, re2, ['delete']);
+    test(`Removal of UPDATE access on ${re1}`, () => {
+      permission.removeByResource(p, re2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-2
+  READ:false, CREATE:false, DELETE:false
+role-2--resource-2
+  READ:false, CREATE:false, DELETE:false
+role-3--resource-2
+  READ:false, CREATE:false, DELETE:false
+role-1--resource-3
+  ALL:false
+role-2--resource-3
+  ALL:false
+role-3--resource-3
+  ALL:false`);
     });
   });
 });
@@ -1072,7 +1244,6 @@ describe('Trace level outputs', () => {
       expect(entry).toEqual({
         access: {
           create: true,
-          delete: true,
           read: true,
           update: true,
         },
@@ -1110,6 +1281,69 @@ describe('Trace level outputs', () => {
       expect(spy).toHaveBeenCalledWith(`Remove "all" for resource "${re1}".`);
       expect(spy).toHaveBeenCalledWith(`Remove "all" for ${ro1}--${re1}.`);
     });
+  });
+});
+
+describe(`Visualize`, () => {
+  const ro1 = 'role-1';
+  const re1 = 'resource-1';
+  const ro2 = 'role-2';
+  const re2 = 'resource-2';
+  const accAllAllow = permission.makeAccessAllowAll();
+  const accAllDeny = permission.makeAccessDenyAll();
+
+  test(`Default ALL access`, () => {
+    const p = permission.newPermissions();
+    permission.makeDefaultAccess(p);
+    const vis = permission.visualize(p);
+    expect(vis).toBe(`*--*
+  ALL:true`);
+  });
+
+  test(`Permissions with default access`, () => {
+    const p = permission.newPermissions();
+    permission.makeDefaultAccess(p);
+    permission.assign(p, ro1, re1, accAllAllow);
+    permission.assign(p, ro2, re2, {
+      create: true,
+      delete: false,
+      read: true,
+      update: false,
+    });
+    const vis = permission.visualize(p);
+    expect(vis).toBe(`*--*
+  ALL:true
+role-1--resource-1
+  ALL:true
+role-2--resource-2
+  READ:true, CREATE:true, UPDATE:false, DELETE:false`);
+  });
+
+  test(`Default ALL deny`, () => {
+    const p = permission.newPermissions();
+    permission.makeDefaultDeny(p);
+    const vis = permission.visualize(p);
+    expect(vis).toBe(`*--*
+  ALL:false`);
+  });
+
+  test(`Permissions with default deny`, () => {
+    const p = permission.newPermissions();
+    permission.makeDefaultDeny(p);
+    permission.assign(p, ro1, re1, accAllDeny);
+    permission.assign(p, ro2, re2, {
+      create: true,
+      delete: false,
+      read: true,
+      update: false,
+    });
+    const vis = permission.visualize(p);
+    expect(vis).toBe(`*--*
+  ALL:false
+role-1--resource-1
+  ALL:false
+role-2--resource-2
+  READ:true, CREATE:true, UPDATE:false, DELETE:false`);
   });
 });
 
