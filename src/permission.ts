@@ -4,18 +4,9 @@
 
 import * as errors from './errors';
 import { isTraceLevel2, isTraceLevel3, isTraceLevel4 } from './functions';
-import { ROOT_ENTITY } from './types';
+import { Access, ActionAllType, ROOT_ENTITY } from './types';
 
 // Reference:  https://dev.to/hansott/how-to-check-if-string-is-member-of-union-type-1j4m
-const ACCESS_TYPES = ['create', 'delete', 'read', 'update'];
-type AccessTuple = typeof ACCESS_TYPES;
-type AccessType = AccessTuple[number];
-
-export type Access = {
-  [K in AccessType]?: boolean;
-};
-
-export type AccessAllType = keyof Access | 'all';
 
 export interface Chart {
   entries: Map<string, ChartEntry>;
@@ -181,13 +172,13 @@ export function isAccessAllTrue(a: Access): boolean {
  * @param chart - The Chart object.
  * @param role - The ID of the access request object.
  * @param resource - The ID of the access control object.
- * @param accessType - The type of access to check for.
+ * @param actionType - The type of action to check for.
  */
 export function isAllowed(
   chart: Chart,
   role: string,
   resource: string,
-  accessType: AccessAllType
+  actionType: ActionAllType
 ): boolean | null {
   const entry = chart.entries.get(_keyFromString(role, resource));
   if (!entry) {
@@ -206,10 +197,10 @@ export function isAllowed(
       )} for role "${role}" and resource "${resource}".`
     );
   }
-  if (accessType === 'all') {
+  if (actionType === 'all') {
     return isAccessAllTrue(entry.access);
   }
-  return entry.access[accessType] === true;
+  return entry.access[actionType] === true;
 }
 
 /**
@@ -218,13 +209,13 @@ export function isAllowed(
  * @param chart - The Chart object.
  * @param role - The ID of the access request object.
  * @param resource - The ID of the access control object.
- * @param accessType - The type of access to check for.
+ * @param actionType - The type of access to check for.
  */
 export function isDenied(
   chart: Chart,
   role: string,
   resource: string,
-  accessType: AccessAllType
+  actionType: ActionAllType
 ): boolean | null {
   const entry = chart.entries.get(_keyFromString(role, resource));
   if (!entry) {
@@ -243,11 +234,11 @@ export function isDenied(
       )} for role "${role}" and resource "${resource}".`
     );
   }
-  if (accessType === 'all') {
+  if (actionType === 'all') {
     return isAccessAllFalse(entry.access);
   }
-  if (accessType in entry.access) {
-    return entry.access[accessType] === false;
+  if (actionType in entry.access) {
+    return entry.access[actionType] === false;
   }
   return null;
 }
@@ -330,23 +321,23 @@ export function newPermissions(): Chart {
  * @param chart - The Chart object.
  * @param role - The ID of the access request object.
  * @param resource - The ID of the access control object.
- * @param removeTypes - The types of access to remove.
+ * @param actionTypes - The types of action to remove.
  */
 export function remove(
   chart: Chart,
   role: string,
   resource: string,
-  removeTypes: AccessAllType[]
+  actionTypes: ActionAllType[]
 ) {
   const key = _keyFromString(role, resource);
   if (isTraceLevel3()) {
-    console.debug(`Remove "${removeTypes.join(', ')}" for ${key}.`);
+    console.debug(`Remove "${actionTypes.join(', ')}" for ${key}.`);
   }
   let entry = chart.entries.get(key);
   if (!entry) {
     throw new errors.NotFoundError(`Permission "${key}" not in chart.`);
   }
-  const newAccess = _subtract(entry.access, removeTypes);
+  const newAccess = _subtract(entry.access, actionTypes);
   if (!newAccess) {
     if (isTraceLevel4()) {
       console.debug(`Remove entry ${key} from permissions chart.`);
@@ -371,21 +362,21 @@ export function remove(
  *
  * @param chart - The Chart object.
  * @param resource - The ID of the access control object.
- * @param removeTypes - The types of access to remove.
+ * @param actionTypes - The types of access to remove.
  */
 export function removeByResource(
   chart: Chart,
   resource: string,
-  removeTypes: AccessAllType[]
+  actionTypes: ActionAllType[]
 ) {
   if (isTraceLevel3()) {
     console.debug(
-      `Remove "${removeTypes.join(', ')}" for resource "${resource}".`
+      `Remove "${actionTypes.join(', ')}" for resource "${resource}".`
     );
   }
   for (const entry of chart.entries.values()) {
     if (entry.resource === resource) {
-      remove(chart, entry.role, resource, removeTypes);
+      remove(chart, entry.role, resource, actionTypes);
     }
   }
 }
@@ -400,14 +391,14 @@ export function removeByResource(
 export function removeByRole(
   chart: Chart,
   role: string,
-  removeTypes: AccessAllType[]
+  actionTypes: ActionAllType[]
 ) {
   if (isTraceLevel3()) {
-    console.debug(`Remove "${removeTypes.join(', ')}" for role "${role}".`);
+    console.debug(`Remove "${actionTypes.join(', ')}" for role "${role}".`);
   }
   for (const entry of chart.entries.values()) {
     if (entry.role === role) {
-      remove(chart, role, entry.resource, removeTypes);
+      remove(chart, role, entry.resource, actionTypes);
     }
   }
 }
@@ -500,13 +491,13 @@ function _keyFromString(aro: string, aco: string) {
   return `${aro}--${aco}`;
 }
 
-function _subtract(from: Access, types: AccessAllType[]): Access | null {
-  if (types.includes('all')) {
+function _subtract(from: Access, actions: ActionAllType[]): Access | null {
+  if (actions.includes('all')) {
     return null;
   }
   const access: Access = {};
   for (const [k, v] of Object.entries(from)) {
-    if (!types.includes(k)) {
+    if (!actions.includes(k)) {
       access[k] = v;
     }
   }

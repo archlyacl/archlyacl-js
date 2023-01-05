@@ -240,7 +240,7 @@ export function remove(
   reg: Registry,
   entity: Entity,
   descendantsToo: boolean = false
-) {
+): Entity[] {
   const removed: Entity[] = [];
   const entityId = getValue(entity);
   if (!has(reg, entity)) {

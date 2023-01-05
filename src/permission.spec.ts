@@ -2,11 +2,11 @@ import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest';
 
 import * as errors from './errors';
 import * as permission from './permission';
-import { ROOT_ENTITY } from './types';
+import { Access, ROOT_ENTITY } from './types';
 
 describe('Access checks', () => {
   test('isAccessAllFalse', () => {
-    const a1: permission.Access = {};
+    const a1: Access = {};
 
     expect(permission.isAccessAllFalse(a1)).toBe(false);
     a1.create = false;
@@ -20,7 +20,7 @@ describe('Access checks', () => {
   });
 
   test('isAccessAllTrue', () => {
-    const a1: permission.Access = {};
+    const a1: Access = {};
 
     expect(permission.isAccessAllTrue(a1)).toBe(false);
     a1.create = true;
@@ -1649,7 +1649,7 @@ describe('Code coverage', () => {
   });
 
   test('prettyPrint', () => {
-    const cases: { accesses: permission.Access; be: string }[] = [
+    const cases: { accesses: Access; be: string }[] = [
       {
         accesses: {
           create: true,
