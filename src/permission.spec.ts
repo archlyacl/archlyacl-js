@@ -935,7 +935,7 @@ role-3--resource-3
   ALL:true`);
     });
 
-    test(`Removal of UPDATE access on ${re1}`, () => {
+    test(`Removal of UPDATE access on ${re2}`, () => {
       permission.removeByResource(p, re2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
@@ -1026,7 +1026,7 @@ role-3--resource-3
   ALL:false`);
     });
 
-    test(`Removal of UPDATE access on ${re1}`, () => {
+    test(`Removal of UPDATE access on ${re2}`, () => {
       permission.removeByResource(p, re2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
@@ -1043,6 +1043,262 @@ role-1--resource-3
   ALL:false
 role-2--resource-3
   ALL:false
+role-3--resource-3
+  ALL:false`);
+    });
+
+    test(`Removal of READ and DELETE access on ${re2}`, () => {
+      permission.removeByResource(p, re2, ['read', 'delete']);
+      expect(permission.size(p)).toBe(7); // Remains the same size.
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-2
+  CREATE:false
+role-2--resource-2
+  CREATE:false
+role-3--resource-2
+  CREATE:false
+role-1--resource-3
+  ALL:false
+role-2--resource-3
+  ALL:false
+role-3--resource-3
+  ALL:false`);
+    });
+
+    test(`Removal of READ and ALL access on ${re3}`, () => {
+      permission.removeByResource(p, re3, ['read', 'all']);
+      expect(permission.size(p)).toBe(4);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-2
+  CREATE:false
+role-2--resource-2
+  CREATE:false
+role-3--resource-2
+  CREATE:false`);
+    });
+  });
+});
+
+describe('Removal by role', () => {
+  describe(`Removal of ALLOW access`, () => {
+    const p = permission.newPermissions();
+    const re1 = 'resource-1';
+    const re2 = 'resource-2';
+    const re3 = 'resource-3';
+    const ro1 = 'role-1';
+    const ro2 = 'role-2';
+    const ro3 = 'role-3';
+    const accAllAllow = permission.makeAccessAllowAll();
+
+    // Add the roles and resources.
+    permission.makeDefaultAccess(p);
+    permission.assign(p, ro1, re1, accAllAllow);
+    permission.assign(p, ro2, re1, accAllAllow);
+    permission.assign(p, ro3, re1, accAllAllow);
+    permission.assign(p, ro1, re2, accAllAllow);
+    permission.assign(p, ro2, re2, accAllAllow);
+    permission.assign(p, ro3, re2, accAllAllow);
+    permission.assign(p, ro1, re3, accAllAllow);
+    permission.assign(p, ro2, re3, accAllAllow);
+    permission.assign(p, ro3, re3, accAllAllow);
+
+    test('Initial state', () => {
+      expect(permission.size(p)).toBe(10);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-1
+  ALL:true
+role-2--resource-1
+  ALL:true
+role-3--resource-1
+  ALL:true
+role-1--resource-2
+  ALL:true
+role-2--resource-2
+  ALL:true
+role-3--resource-2
+  ALL:true
+role-1--resource-3
+  ALL:true
+role-2--resource-3
+  ALL:true
+role-3--resource-3
+  ALL:true`);
+    });
+
+    test(`Removal of ALL access of ${ro1}`, () => {
+      permission.removeByRole(p, ro1, ['all']);
+      expect(permission.size(p)).toBe(7);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-2--resource-1
+  ALL:true
+role-3--resource-1
+  ALL:true
+role-2--resource-2
+  ALL:true
+role-3--resource-2
+  ALL:true
+role-2--resource-3
+  ALL:true
+role-3--resource-3
+  ALL:true`);
+    });
+
+    test(`Removal of UPDATE access on ${ro2}`, () => {
+      permission.removeByRole(p, ro2, ['update']);
+      expect(permission.size(p)).toBe(7); // Remains the same size.
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-2--resource-1
+  READ:true, CREATE:true, DELETE:true
+role-3--resource-1
+  ALL:true
+role-2--resource-2
+  READ:true, CREATE:true, DELETE:true
+role-3--resource-2
+  ALL:true
+role-2--resource-3
+  READ:true, CREATE:true, DELETE:true
+role-3--resource-3
+  ALL:true`);
+    });
+
+    test(`Removal of READ and DELETE access on ${ro2}`, () => {
+      permission.removeByRole(p, ro2, ['read', 'delete']);
+      expect(permission.size(p)).toBe(7); // Remains the same size.
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-2--resource-1
+  CREATE:true
+role-3--resource-1
+  ALL:true
+role-2--resource-2
+  CREATE:true
+role-3--resource-2
+  ALL:true
+role-2--resource-3
+  CREATE:true
+role-3--resource-3
+  ALL:true`);
+    });
+
+    test(`Removal of READ and ALL access on ${ro3}`, () => {
+      permission.removeByRole(p, ro3, ['read', 'all']);
+      expect(permission.size(p)).toBe(4);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-2--resource-1
+  CREATE:true
+role-2--resource-2
+  CREATE:true
+role-2--resource-3
+  CREATE:true`);
+    });
+  });
+
+  describe(`Removal of DENY access`, () => {
+    const p = permission.newPermissions();
+    const re1 = 'resource-1';
+    const re2 = 'resource-2';
+    const re3 = 'resource-3';
+    const ro1 = 'role-1';
+    const ro2 = 'role-2';
+    const ro3 = 'role-3';
+    const accAllDeny = permission.makeAccessDenyAll();
+
+    // Add the roles and resources.
+    permission.makeDefaultAccess(p);
+    permission.assign(p, ro1, re1, accAllDeny);
+    permission.assign(p, ro2, re1, accAllDeny);
+    permission.assign(p, ro3, re1, accAllDeny);
+    permission.assign(p, ro1, re2, accAllDeny);
+    permission.assign(p, ro2, re2, accAllDeny);
+    permission.assign(p, ro3, re2, accAllDeny);
+    permission.assign(p, ro1, re3, accAllDeny);
+    permission.assign(p, ro2, re3, accAllDeny);
+    permission.assign(p, ro3, re3, accAllDeny);
+
+    test('Initial state', () => {
+      expect(permission.size(p)).toBe(10);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-1--resource-1
+  ALL:false
+role-2--resource-1
+  ALL:false
+role-3--resource-1
+  ALL:false
+role-1--resource-2
+  ALL:false
+role-2--resource-2
+  ALL:false
+role-3--resource-2
+  ALL:false
+role-1--resource-3
+  ALL:false
+role-2--resource-3
+  ALL:false
+role-3--resource-3
+  ALL:false`);
+    });
+
+    test(`Removal of ALL access on ${ro1}`, () => {
+      permission.removeByRole(p, ro1, ['all']);
+      expect(permission.size(p)).toBe(7);
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-2--resource-1
+  ALL:false
+role-3--resource-1
+  ALL:false
+role-2--resource-2
+  ALL:false
+role-3--resource-2
+  ALL:false
+role-2--resource-3
+  ALL:false
+role-3--resource-3
+  ALL:false`);
+    });
+
+    test(`Removal of UPDATE access on ${ro2}`, () => {
+      permission.removeByRole(p, ro2, ['update']);
+      expect(permission.size(p)).toBe(7); // Remains the same size.
+
+      const output = permission.visualize(p);
+      expect(output).toBe(`*--*
+  ALL:true
+role-2--resource-1
+  READ:false, CREATE:false, DELETE:false
+role-3--resource-1
+  ALL:false
+role-2--resource-2
+  READ:false, CREATE:false, DELETE:false
+role-3--resource-2
+  ALL:false
+role-2--resource-3
+  READ:false, CREATE:false, DELETE:false
 role-3--resource-3
   ALL:false`);
     });
@@ -1270,7 +1526,7 @@ describe('Trace level outputs', () => {
     const re1 = 'resource-1';
     const accAllAllow = permission.makeAccessAllowAll();
 
-    test('entry found', () => {
+    test('resource entries found', () => {
       const p = permission.newPermissions();
       permission.makeDefaultAccess(p);
       permission.assign(p, ro1, re1, accAllAllow);
@@ -1279,6 +1535,18 @@ describe('Trace level outputs', () => {
       permission.removeByResource(p, re1, ['all']);
       expect(spy).toHaveBeenCalledTimes(2);
       expect(spy).toHaveBeenCalledWith(`Remove "all" for resource "${re1}".`);
+      expect(spy).toHaveBeenCalledWith(`Remove "all" for ${ro1}--${re1}.`);
+    });
+
+    test(`role entries found`, () => {
+      const p = permission.newPermissions();
+      permission.makeDefaultAccess(p);
+      permission.assign(p, ro1, re1, accAllAllow);
+
+      const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      permission.removeByRole(p, ro1, ['all']);
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenCalledWith(`Remove "all" for role "${ro1}".`);
       expect(spy).toHaveBeenCalledWith(`Remove "all" for ${ro1}--${re1}.`);
     });
   });

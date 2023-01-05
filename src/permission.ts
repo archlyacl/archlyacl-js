@@ -390,7 +390,27 @@ export function removeByResource(
   }
 }
 
-// export function removeByRole()
+/**
+ * Removes a specific set of permissions on the role for all resources.
+ *
+ * @param chart - The Chart object.
+ * @param role - The ID of the access request object.
+ * @param removeTypes - The types of access to remove.
+ */
+export function removeByRole(
+  chart: Chart,
+  role: string,
+  removeTypes: AccessAllType[]
+) {
+  if (isTraceLevel3()) {
+    console.debug(`Remove "${removeTypes.join(', ')}" for role "${role}".`);
+  }
+  for (const entry of chart.entries.values()) {
+    if (entry.role === role) {
+      remove(chart, role, entry.resource, removeTypes);
+    }
+  }
+}
 
 /**
  * The number of specified permissions.
