@@ -24,6 +24,8 @@ export interface Registry {
  * @param reg - The Registry object to add the entity to.
  * @param entity - The entity to add.
  * @param parent - The parent entry under which to place the entity.
+ * @throws {DuplicateError} Throws this error if the entity is already present.
+ * @throws {NotFoundError} Throws this error if the parent entity, when specified, is not present in the registry.
  */
 export function add(reg: Registry, entity: Entity, parent?: Entity) {
   const entityId = getValue(entity);

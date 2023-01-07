@@ -1,10 +1,31 @@
 import { describe, expect, test } from 'vitest';
+
 import { Acl } from './acl';
+import * as errors from './errors';
 import * as permission from './permission';
 
 describe('Instantiation', () => {
-  test(`Properties are initialized`, () => {
+  test(`Instantiation with no default permissions`, () => {
     const a1 = new Acl();
+
+    const per = a1.exportPermissions();
+    expect(permission.visualize(per)).toBe(``);
+
+    const res = a1.exportResources();
+    expect(res).toEqual({
+      records: {},
+      register: {},
+    });
+
+    const rol = a1.exportRoles();
+    expect(rol).toEqual({
+      records: {},
+      register: {},
+    });
+  });
+
+  test(`Instantiation with default allow`, () => {
+    const a1 = new Acl(true);
 
     const per = a1.exportPermissions();
     expect(permission.visualize(per)).toBe(`*--*
@@ -21,6 +42,90 @@ describe('Instantiation', () => {
       records: {},
       register: {},
     });
+
+    // Adding resources without permissions should adopt default.
+    const re1 = 'res-1';
+    const ro1 = 'rol-1';
+
+    a1.addResource(re1);
+    a1.addRole(ro1);
+    expect(a1.isAllowed(ro1, re1)).toBe(true);
+    expect(a1.isAllowed(ro1, re1, 'all')).toBe(true);
+    expect(a1.isAllowed(ro1, re1, 'create')).toBe(true);
+    expect(a1.isAllowed(ro1, re1, 'delete')).toBe(true);
+    expect(a1.isAllowed(ro1, re1, 'read')).toBe(true);
+    expect(a1.isAllowed(ro1, re1, 'update')).toBe(true);
+    expect(a1.isDenied(ro1, re1)).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'create')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'delete')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'read')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'update')).toBe(false);
+
+    // Clear the default permissions.
+    a1.clear();
+    expect(a1.isAllowed(ro1, re1)).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'all')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'create')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'delete')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'read')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'update')).toBe(false);
+    expect(a1.isDenied(ro1, re1)).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'create')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'delete')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'read')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'update')).toBe(false);
+  });
+
+  test(`Instantiation with default deny`, () => {
+    const a1 = new Acl(false);
+
+    const per = a1.exportPermissions();
+    expect(permission.visualize(per)).toBe(`*--*
+  ALL:false`);
+
+    const res = a1.exportResources();
+    expect(res).toEqual({
+      records: {},
+      register: {},
+    });
+
+    const rol = a1.exportRoles();
+    expect(rol).toEqual({
+      records: {},
+      register: {},
+    });
+
+    // Adding resources without permissions should adopt default.
+    const re1 = 'res-1';
+    const ro1 = 'rol-1';
+
+    a1.addResource(re1);
+    a1.addRole(ro1);
+    expect(a1.isAllowed(ro1, re1)).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'all')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'create')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'delete')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'read')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'update')).toBe(false);
+    expect(a1.isDenied(ro1, re1)).toBe(true);
+    expect(a1.isDenied(ro1, re1, 'create')).toBe(true);
+    expect(a1.isDenied(ro1, re1, 'delete')).toBe(true);
+    expect(a1.isDenied(ro1, re1, 'read')).toBe(true);
+    expect(a1.isDenied(ro1, re1, 'update')).toBe(true);
+
+    // Clear the default permissions.
+    a1.clear();
+    expect(a1.isAllowed(ro1, re1)).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'all')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'create')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'delete')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'read')).toBe(false);
+    expect(a1.isAllowed(ro1, re1, 'update')).toBe(false);
+    expect(a1.isDenied(ro1, re1)).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'create')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'delete')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'read')).toBe(false);
+    expect(a1.isDenied(ro1, re1, 'update')).toBe(false);
   });
 
   test(`Adding & removing of role/resource`, () => {
@@ -63,5 +168,41 @@ describe('Instantiation', () => {
       records: {},
       register: {},
     });
+  });
+
+  test(`Add resource exception`, () => {
+    const a1 = new Acl();
+    const res1 = 'res1';
+    const res2 = 'res2';
+
+    expect(() => {
+      a1.addResource(res2, res1);
+    }).toThrow(errors.NotFoundError);
+
+    expect(a1.addResource(res1)).toBeFalsy();
+    expect(a1.hasResource(res1)).toBe(true);
+    expect(a1.hasResource(res2)).toBe(false);
+
+    expect(a1.addResource(res2, res1)).toBeFalsy();
+    expect(a1.hasResource(res1)).toBe(true);
+    expect(a1.hasResource(res2)).toBe(true);
+  });
+
+  test(`Add role exception`, () => {
+    const a1 = new Acl();
+    const rol1 = 'rol1';
+    const rol2 = 'rol2';
+
+    expect(() => {
+      a1.addRole(rol2, rol1);
+    }).toThrow(errors.NotFoundError);
+
+    expect(a1.addRole(rol1)).toBeFalsy();
+    expect(a1.hasRole(rol1)).toBe(true);
+    expect(a1.hasRole(rol2)).toBe(false);
+
+    expect(a1.addRole(rol2, rol1)).toBeFalsy();
+    expect(a1.hasRole(rol1)).toBe(true);
+    expect(a1.hasRole(rol2)).toBe(true);
   });
 });

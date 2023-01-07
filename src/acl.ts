@@ -2,16 +2,25 @@ import { DuplicateError } from './errors';
 import { getValue } from './functions';
 import * as permission from './permission';
 import * as registry from './registry';
-import { Access, Entity } from './types';
+import { Access, ActionAllType, Entity } from './types';
 
 export class Acl {
   private permissions: permission.Chart;
   private resources: registry.Registry;
   private roles: registry.Registry;
 
-  constructor() {
+  /**
+   * Creates an instance of the Acl class.
+   *
+   * @param defaultAllow - Whether to have the default permission to be allowed or denied. If not specified, the default permission is not created.
+   */
+  constructor(defaultAllow?: boolean) {
     this.permissions = permission.newPermissions();
-    permission.makeDefaultAccess(this.permissions);
+    if (defaultAllow) {
+      permission.makeDefaultAccess(this.permissions);
+    } else if (defaultAllow === false) {
+      permission.makeDefaultDeny(this.permissions);
+    }
 
     this.resources = {
       records: {},
@@ -29,6 +38,7 @@ export class Acl {
    *
    * @param resource - The resource to add to the registry.
    * @param parent - The parent resource to add the new resource under. The parent resource must exist.
+   * @throws {DuplicateError} Throws this error if the resource is already present.
    * @throws {NotFoundError} Throws this error if the parent resource, when specified, is not present in the registry.
    */
   public addResource(resource: Entity, parent?: Entity) {
@@ -40,13 +50,14 @@ export class Acl {
    *
    * @param role - The role to add to the registry.
    * @param parent - The parent role to add the new role under. The parent role must exist.
-   * @throws{NotFoundError} Throws this error if the parent resource, when specified, is not present in the registry.
+   * @throws {DuplicateError} Throws this error if the role is already present.
+   * @throws {NotFoundError} Throws this error if the parent role, when specified, is not present in the registry.
    */
   public addRole(role: Entity, parent?: Entity) {
     registry.add(this.roles, role, parent);
   }
 
-  public assign(role: Entity, resource: Entity, access: Access) {
+  public assign(role: Entity, resource: Entity, access: Access | boolean) {
     try {
       registry.add(this.resources, resource);
     } catch (e) {
@@ -65,12 +76,25 @@ export class Acl {
       // Else, do nothing.
     }
 
-    permission.assign(
-      this.permissions,
-      getValue(role),
-      getValue(resource),
-      access
-    );
+    let ac: Access;
+    if (access === true) {
+      ac = permission.makeAccessAllowAll();
+    } else if (access === false) {
+      ac = permission.makeAccessDenyAll();
+    } else {
+      ac = access;
+    }
+
+    permission.assign(this.permissions, getValue(role), getValue(resource), ac);
+  }
+
+  /**
+   * Clears the entire list.
+   */
+  public clear() {
+    permission.clear(this.permissions);
+    registry.clear(this.resources);
+    registry.clear(this.roles);
   }
 
   /**
@@ -92,6 +116,78 @@ export class Acl {
    */
   public exportRoles(): registry.Registry {
     return registry.clone(this.roles);
+  }
+
+  /**
+   * Checks if the resource is in the registry.
+   *
+   * @param resource - The resource to check for.
+   */
+  public hasResource(resource: Entity): boolean {
+    return registry.has(this.resources, resource);
+  }
+
+  /**
+   * Checks if the role is in the registry.
+   *
+   * @param role - The role to check for.
+   */
+  public hasRole(role: Entity): boolean {
+    return registry.has(this.roles, role);
+  }
+
+  /**
+   * Checks if the role has the action access allowed for the specified resource.
+   *
+   * @param role - The role to check for.
+   * @param resource - The resource to check for.
+   * @param action - The action type. Default 'all'.
+   */
+  public isAllowed(
+    role: Entity,
+    resource: Entity,
+    action: ActionAllType = 'all'
+  ): boolean {
+    const resPath = registry.traverseToRoot(this.resources, resource);
+    const rolPath = registry.traverseToRoot(this.roles, role);
+
+    for (const aro of rolPath) {
+      for (const aco of resPath) {
+        let grant = permission.isAllowed(this.permissions, aro, aco, action);
+        if (grant !== null) {
+          return grant;
+        }
+        // Else access not defined. Continue.
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if the role has the action access denied for the specified resource.
+   *
+   * @param role - The role to check for.
+   * @param resource - The resource to check for.
+   * @param action - The action type. Default 'all'.
+   */
+  public isDenied(
+    role: Entity,
+    resource: Entity,
+    action: ActionAllType = 'all'
+  ): boolean {
+    const resPath = registry.traverseToRoot(this.resources, resource);
+    const rolPath = registry.traverseToRoot(this.roles, role);
+
+    for (const aro of rolPath) {
+      for (const aco of resPath) {
+        let grant = permission.isDenied(this.permissions, aro, aco, action);
+        if (grant !== null) {
+          return grant;
+        }
+        // Else access not defined. Continue.
+      }
+    }
+    return false;
   }
 
   /**
