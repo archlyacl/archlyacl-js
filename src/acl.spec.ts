@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { Acl } from './acl';
 import * as errors from './errors';
 import * as permission from './permission';
+import { ROOT_ENTITY } from './types';
 
 describe('Instantiation', () => {
   test(`Instantiation with no default permissions`, () => {
@@ -204,5 +205,220 @@ describe('Instantiation', () => {
     expect(a1.addRole(rol2, rol1)).toBeFalsy();
     expect(a1.hasRole(rol1)).toBe(true);
     expect(a1.hasRole(rol2)).toBe(true);
+  });
+});
+
+describe(`ACL2: Assign ALLOW permissions`, () => {
+  const res1 = 'res-1';
+  const rol1 = 'rol-1';
+
+  describe(`A: no permission set`, () => {
+    test(`1: entities not added`, () => {
+      const a1 = new Acl();
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`2: entities added with no permissions`, () => {
+      const a1 = new Acl();
+      a1.addResource(res1);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+
+      a1.addRole(rol1);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`3: permissions added with no entities`, () => {
+      const a1 = new Acl();
+      a1.assign(rol1, res1, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`4: permissions added with pre-existing entities`, () => {
+      const a1 = new Acl();
+      a1.addResource(res1);
+      a1.addRole(rol1);
+      a1.assign(rol1, res1, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+  });
+
+  describe(`B: default deny`, () => {
+    test(`1: entities not added`, () => {
+      const a1 = new Acl(false);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isDenied(rol1, res1)).toBe(true);
+    });
+
+    test(`2: entities added with no permissions`, () => {
+      const a1 = new Acl(false);
+      a1.addResource(res1);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isDenied(rol1, res1)).toBe(true);
+
+      a1.addRole(rol1);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isDenied(rol1, res1)).toBe(true);
+    });
+
+    test(`3: permissions added with no entities`, () => {
+      const a1 = new Acl(false);
+      a1.assign(rol1, res1, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`4: permissions added with pre-existing entities`, () => {
+      const a1 = new Acl(false);
+      a1.addResource(res1);
+      a1.addRole(rol1);
+      a1.assign(rol1, res1, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+  });
+
+  describe(`C: default allow`, () => {
+    test(`1: entities not added`, () => {
+      const a1 = new Acl(true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`2: entities added with no permissions`, () => {
+      const a1 = new Acl(true);
+      a1.addResource(res1);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+
+      a1.addRole(rol1);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`3: permissions added with no entities`, () => {
+      const a1 = new Acl(true);
+      a1.assign(rol1, res1, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
+
+    test(`4: permissions added with pre-existing entities`, () => {
+      const a1 = new Acl(true);
+      a1.addResource(res1);
+      a1.addRole(rol1);
+      a1.assign(rol1, res1, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(true);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(true);
+      expect(a1.isAllowed(rol1, res1)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+    });
   });
 });
