@@ -891,7 +891,7 @@ describe('Removal by resource', () => {
     test('Initial state', () => {
       expect(permission.size(p)).toBe(10);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-1
@@ -918,7 +918,7 @@ role-3--resource-3
       permission.removeByResource(p, re1, ['all']);
       expect(permission.size(p)).toBe(7);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-2
@@ -939,7 +939,7 @@ role-3--resource-3
       permission.removeByResource(p, re2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-2
@@ -982,7 +982,7 @@ role-3--resource-3
     test('Initial state', () => {
       expect(permission.size(p)).toBe(10);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-1
@@ -1009,7 +1009,7 @@ role-3--resource-3
       permission.removeByResource(p, re1, ['all']);
       expect(permission.size(p)).toBe(7);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-2
@@ -1030,7 +1030,7 @@ role-3--resource-3
       permission.removeByResource(p, re2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-2
@@ -1051,7 +1051,7 @@ role-3--resource-3
       permission.removeByResource(p, re2, ['read', 'delete']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-2
@@ -1072,7 +1072,7 @@ role-3--resource-3
       permission.removeByResource(p, re3, ['read', 'all']);
       expect(permission.size(p)).toBe(4);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-2
@@ -1111,7 +1111,7 @@ describe('Removal by role', () => {
     test('Initial state', () => {
       expect(permission.size(p)).toBe(10);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-1
@@ -1138,7 +1138,7 @@ role-3--resource-3
       permission.removeByRole(p, ro1, ['all']);
       expect(permission.size(p)).toBe(7);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-2--resource-1
@@ -1159,7 +1159,7 @@ role-3--resource-3
       permission.removeByRole(p, ro2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-2--resource-1
@@ -1180,7 +1180,7 @@ role-3--resource-3
       permission.removeByRole(p, ro2, ['read', 'delete']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-2--resource-1
@@ -1201,7 +1201,7 @@ role-3--resource-3
       permission.removeByRole(p, ro3, ['read', 'all']);
       expect(permission.size(p)).toBe(4);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-2--resource-1
@@ -1238,7 +1238,7 @@ role-2--resource-3
     test('Initial state', () => {
       expect(permission.size(p)).toBe(10);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-1--resource-1
@@ -1265,7 +1265,7 @@ role-3--resource-3
       permission.removeByRole(p, ro1, ['all']);
       expect(permission.size(p)).toBe(7);
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-2--resource-1
@@ -1286,7 +1286,7 @@ role-3--resource-3
       permission.removeByRole(p, ro2, ['update']);
       expect(permission.size(p)).toBe(7); // Remains the same size.
 
-      const output = permission.visualize(p);
+      const output = permission.printAll(p);
       expect(output).toBe(`*--*
   ALL:true
 role-2--resource-1
@@ -1552,7 +1552,7 @@ describe('Trace level outputs', () => {
   });
 });
 
-describe(`Visualize`, () => {
+describe(`printAll`, () => {
   const ro1 = 'role-1';
   const re1 = 'resource-1';
   const ro2 = 'role-2';
@@ -1563,7 +1563,7 @@ describe(`Visualize`, () => {
   test(`Default ALL access`, () => {
     const p = permission.newPermissions();
     permission.makeDefaultAccess(p);
-    const vis = permission.visualize(p);
+    const vis = permission.printAll(p);
     expect(vis).toBe(`*--*
   ALL:true`);
   });
@@ -1578,7 +1578,7 @@ describe(`Visualize`, () => {
       read: true,
       update: false,
     });
-    const vis = permission.visualize(p);
+    const vis = permission.printAll(p);
     expect(vis).toBe(`*--*
   ALL:true
 role-1--resource-1
@@ -1590,7 +1590,7 @@ role-2--resource-2
   test(`Default ALL deny`, () => {
     const p = permission.newPermissions();
     permission.makeDefaultDeny(p);
-    const vis = permission.visualize(p);
+    const vis = permission.printAll(p);
     expect(vis).toBe(`*--*
   ALL:false`);
   });
@@ -1605,7 +1605,7 @@ role-2--resource-2
       read: true,
       update: false,
     });
-    const vis = permission.visualize(p);
+    const vis = permission.printAll(p);
     expect(vis).toBe(`*--*
   ALL:false
 role-1--resource-1

@@ -1,5 +1,5 @@
 import { DuplicateError } from './errors';
-import { getValue } from './functions';
+import { getValue, isTraceLevel3 } from './functions';
 import * as permission from './permission';
 import * as registry from './registry';
 import { Access, ActionAllType, Entity } from './types';
@@ -153,6 +153,9 @@ export class Acl {
 
     for (const aro of rolPath) {
       for (const aco of resPath) {
+        if (isTraceLevel3()) {
+          console.debug(`Checking role "${aro}" on resource "${aco}".`);
+        }
         let grant = permission.isAllowed(this.permissions, aro, aco, action);
         if (grant !== null) {
           return grant;
@@ -216,5 +219,16 @@ export class Acl {
     for (const role of roles) {
       permission.removeByRole(this.permissions, getValue(role), ['all']);
     }
+  }
+
+  /**
+   * Creates a textual output illustrating the role hierarchy and permissions.
+   */
+  public visualize(): string {
+    const output = [];
+    output.push(registry.printAll(this.resources));
+    output.push(registry.printAll(this.roles));
+    output.push(permission.printAll(this.permissions));
+    return output.join('\n');
   }
 }

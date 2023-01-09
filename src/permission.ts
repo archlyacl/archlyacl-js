@@ -461,7 +461,7 @@ export function prettyPrint(acc: Access): string {
  *
  * @param chart - The Chart object.
  */
-export function visualize(chart: Chart) {
+export function printAll(chart: Chart) {
   const out = [];
 
   for (const [key, entry] of chart.entries.entries()) {
