@@ -404,6 +404,126 @@ describe(`ACL2: Assign ALLOW permissions`, () => {
       expect(a1.isDenied(rol2, res1)).toBe(false);
       expect(a1.isDenied(rol2, res2)).toBe(true);
     });
+
+    test(`9: override permissions on multiple levels`, () => {
+      const res3 = 'res-3';
+      const rol3 = 'rol-3';
+
+      const a1 = new Acl();
+      a1.addResource(res1);
+      a1.addResource(res2, res1);
+      a1.addResource(res3, res2);
+      a1.addRole(rol1);
+      a1.addRole(rol2, rol1);
+      a1.addRole(rol3, rol2);
+      /// res1 -> res2 -> res3
+      /// rol1 -> rol2 -> rol3
+
+      a1.assign(rol2, res1, false);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res2)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res3)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res2)).toBe(false);
+      expect(a1.isAllowed(rol1, res3)).toBe(false);
+      expect(a1.isAllowed(rol2, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol2, res1)).toBe(false);
+      expect(a1.isAllowed(rol2, res2)).toBe(false);
+      expect(a1.isAllowed(rol2, res3)).toBe(false);
+      expect(a1.isAllowed(rol3, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol3, res1)).toBe(false);
+      expect(a1.isAllowed(rol3, res2)).toBe(false);
+      expect(a1.isAllowed(rol3, res3)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res2)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res3)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res2)).toBe(false);
+      expect(a1.isDenied(rol1, res3)).toBe(false);
+      expect(a1.isDenied(rol2, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol2, res1)).toBe(true);
+      expect(a1.isDenied(rol2, res2)).toBe(true);
+      expect(a1.isDenied(rol2, res3)).toBe(true);
+      expect(a1.isDenied(rol3, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol3, res1)).toBe(true);
+      expect(a1.isDenied(rol3, res2)).toBe(true);
+      expect(a1.isDenied(rol3, res3)).toBe(true);
+
+      a1.assign(rol2, res2, true);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res2)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res3)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res2)).toBe(false);
+      expect(a1.isAllowed(rol1, res3)).toBe(false);
+      expect(a1.isAllowed(rol2, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol2, res1)).toBe(false);
+      expect(a1.isAllowed(rol2, res2)).toBe(true);
+      expect(a1.isAllowed(rol2, res3)).toBe(true);
+      expect(a1.isAllowed(rol3, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol3, res1)).toBe(false);
+      expect(a1.isAllowed(rol3, res2)).toBe(true);
+      expect(a1.isAllowed(rol3, res3)).toBe(true);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res2)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res3)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res2)).toBe(false);
+      expect(a1.isDenied(rol1, res3)).toBe(false);
+      expect(a1.isDenied(rol2, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol2, res1)).toBe(true);
+      expect(a1.isDenied(rol2, res2)).toBe(false);
+      expect(a1.isDenied(rol2, res3)).toBe(false);
+      expect(a1.isDenied(rol3, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol3, res1)).toBe(true);
+      expect(a1.isDenied(rol3, res2)).toBe(false);
+      expect(a1.isDenied(rol3, res3)).toBe(false);
+
+      a1.assign(rol3, res3, false);
+      expect(a1.isAllowed(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res2)).toBe(false);
+      expect(a1.isAllowed(ROOT_ENTITY, res3)).toBe(false);
+      expect(a1.isAllowed(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol1, res1)).toBe(false);
+      expect(a1.isAllowed(rol1, res2)).toBe(false);
+      expect(a1.isAllowed(rol1, res3)).toBe(false);
+      expect(a1.isAllowed(rol2, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol2, res1)).toBe(false);
+      expect(a1.isAllowed(rol2, res2)).toBe(true);
+      expect(a1.isAllowed(rol2, res3)).toBe(true);
+      expect(a1.isAllowed(rol3, ROOT_ENTITY)).toBe(false);
+      expect(a1.isAllowed(rol3, res1)).toBe(false);
+      expect(a1.isAllowed(rol3, res2)).toBe(true);
+      expect(a1.isAllowed(rol3, res3)).toBe(false);
+
+      expect(a1.isDenied(ROOT_ENTITY, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res1)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res2)).toBe(false);
+      expect(a1.isDenied(ROOT_ENTITY, res3)).toBe(false);
+      expect(a1.isDenied(rol1, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol1, res1)).toBe(false);
+      expect(a1.isDenied(rol1, res2)).toBe(false);
+      expect(a1.isDenied(rol1, res3)).toBe(false);
+      expect(a1.isDenied(rol2, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol2, res1)).toBe(true);
+      expect(a1.isDenied(rol2, res2)).toBe(false);
+      expect(a1.isDenied(rol2, res3)).toBe(false);
+      expect(a1.isDenied(rol3, ROOT_ENTITY)).toBe(false);
+      expect(a1.isDenied(rol3, res1)).toBe(true);
+      expect(a1.isDenied(rol3, res2)).toBe(false);
+      expect(a1.isDenied(rol3, res3)).toBe(true);
+    });
   });
 
   describe(`B: default deny`, () => {
