@@ -1,4 +1,3 @@
-import { DuplicateError } from './errors';
 import { getValue, isTraceLevel3 } from './functions';
 import * as permission from './permission';
 import * as registry from './registry';
@@ -61,19 +60,13 @@ export class Acl {
     try {
       registry.add(this.resources, resource);
     } catch (e) {
-      if (!(e instanceof DuplicateError)) {
-        throw e;
-      }
-      // Else, do nothing.
+      // Only DuplicateError can be thrown. Do nothing.
     }
 
     try {
       registry.add(this.roles, role);
     } catch (e) {
-      if (!(e instanceof DuplicateError)) {
-        throw e;
-      }
-      // Else, do nothing.
+      // Only DuplicateError can be thrown. Do nothing.
     }
 
     let ac: Access;
@@ -183,6 +176,9 @@ export class Acl {
 
     for (const aro of rolPath) {
       for (const aco of resPath) {
+        if (isTraceLevel3()) {
+          console.debug(`Checking role "${aro}" on resource "${aco}".`);
+        }
         let grant = permission.isDenied(this.permissions, aro, aco, action);
         if (grant !== null) {
           return grant;
