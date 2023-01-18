@@ -10,7 +10,7 @@ import { Entity } from './types';
  * Any object that meets one of the following conditions is accepted:
  *
  * - a string type
- * - has the `id` string/numberic property
+ * - has the `id` string/numeric property
  *
  * @param entity - The item to add to the registry.
  * @throws {InvalidTypeError} Throws this error if the supplied item does not meet any of the conditions.

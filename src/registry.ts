@@ -148,6 +148,19 @@ export function hasChild(reg: Registry, parent: Entity): boolean {
 }
 
 /**
+ * Recreates the records and register from a JSON string that should be serialized from `saveToJson`.
+ *
+ * @param json - The supplied JSON string.
+ *
+ * @see saveToJson
+ * @see recreate
+ */
+export function loadFromJson(json: string): Registry {
+  const obj = JSON.parse(json);
+  return recreate(obj);
+}
+
+/**
  * Prints a cascading list of entries in the registry.
  *
  * @param reg - The Registry object to print.
@@ -168,6 +181,11 @@ export function print(
   return output.join('');
 }
 
+/**
+ * Prints the full register of entity hierarchy.
+ *
+ * @param reg - The Registry object to print.
+ */
 export function printAll(reg: Registry): string {
   const output = [];
   let maxKeyLen = 0;
@@ -270,6 +288,18 @@ export function remove(
   removed.push(entity);
 
   return removed;
+}
+
+/**
+ * Creates a JSON representation of the records and register that is to be used to deserialize with `loadFromJson`.
+ *
+ * @param reg - The Registry object to serialize.
+ *
+ * @see loadFromJson
+ */
+export function saveToJson(reg: Registry): string {
+  const duplicate = clone(reg);
+  return JSON.stringify(duplicate);
 }
 
 /**

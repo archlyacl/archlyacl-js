@@ -620,3 +620,179 @@ describe('4 levels', () => {
     expect(r.traverseToRoot(reg, e3a1a)).toEqual(['e3a1a', 'e3a', '*']);
   });
 });
+
+describe('Save/Load', () => {
+  test(`entities as strings`, () => {
+    const e1 = 'e1';
+    const e2 = 'e2';
+
+    const reg: r.Registry = {
+      records: {},
+      register: {},
+    };
+
+    r.add(reg, e1);
+    r.add(reg, e2, e1);
+    const json = r.saveToJson(reg);
+    expect(json).toBe(
+      `{"records":{"e1":"e1","e2":"e2"},"register":{"e1":"*","e2":"e1"}}`
+    );
+
+    const result = r.loadFromJson(json);
+    expect(r.printAll(result)).toBe(` e1 | *
+ e2 | e1
+`);
+    expect(r.getRecord(result, e1)).toBe(e1);
+    expect(r.getRecord(result, e2)).toBe(e2);
+  });
+
+  test(`entities with string IDs as types`, () => {
+    type User = {
+      id: string;
+      name: string;
+    };
+    const u1: User = {
+      id: 'u1',
+      name: 'User One',
+    };
+    const u2: User = {
+      id: 'u2',
+      name: 'User Two',
+    };
+
+    const reg: r.Registry = {
+      records: {},
+      register: {},
+    };
+
+    r.add(reg, u1);
+    r.add(reg, u2, u1);
+    const json = r.saveToJson(reg);
+    expect(json).toBe(
+      `{"records":{"u1":{"id":"u1","name":"User One"},"u2":{"id":"u2","name":"User Two"}},"register":{"u1":"*","u2":"u1"}}`
+    );
+
+    const result = r.loadFromJson(json);
+    expect(r.printAll(result)).toBe(` u1 | *
+ u2 | u1
+`);
+    expect(r.getRecord(result, u1.id)).toEqual(u1);
+    expect(r.getRecord(result, u2.id)).toEqual(u2);
+  });
+
+  test(`entities with numeric IDs as types`, () => {
+    type User = {
+      id: number;
+      name: string;
+    };
+    const u1: User = {
+      id: 1,
+      name: 'TypeUser One',
+    };
+    const u2: User = {
+      id: 2,
+      name: 'TypeUser Two',
+    };
+
+    const reg: r.Registry = {
+      records: {},
+      register: {},
+    };
+
+    r.add(reg, u1);
+    r.add(reg, u2, u1);
+    const json = r.saveToJson(reg);
+    expect(json).toBe(
+      `{"records":{"1":{"id":1,"name":"TypeUser One"},"2":{"id":2,"name":"TypeUser Two"}},"register":{"1":"*","2":"1"}}`
+    );
+
+    const result = r.loadFromJson(json);
+    expect(r.printAll(result)).toBe(` 1 | *
+ 2 | 1
+`);
+    expect(r.getRecord(result, u1.id.toString())).toEqual(u1);
+    expect(r.getRecord(result, u2.id.toString())).toEqual(u2);
+  });
+
+  test(`entities with string IDs as classes`, () => {
+    class User {
+      id: string;
+      name: string;
+
+      constructor(id: string, name: string) {
+        this.id = id;
+        this.name = name;
+      }
+
+      public print(): string {
+        return `${this.id} - ${this.name}`;
+      }
+    }
+    const u1 = new User('u1', 'ClassUser One');
+    const u2 = new User('u2', 'ClassUser Two');
+
+    const reg: r.Registry = {
+      records: {},
+      register: {},
+    };
+
+    r.add(reg, u1);
+    r.add(reg, u2, u1);
+    const json = r.saveToJson(reg);
+    expect(json).toBe(
+      `{"records":{"u1":{"id":"u1","name":"ClassUser One"},"u2":{"id":"u2","name":"ClassUser Two"}},"register":{"u1":"*","u2":"u1"}}`
+    );
+
+    const result = r.loadFromJson(json);
+    expect(r.printAll(result)).toBe(` u1 | *
+ u2 | u1
+`);
+    const r1 = r.getRecord(result, u1.id);
+    expect(r1).toEqual(u1);
+    const r2 = r.getRecord(result, u2.id);
+    expect(r2).toEqual(u2);
+  });
+
+  test(`entities with numeric IDs as classes`, () => {
+    class User {
+      id: number;
+      name: string;
+
+      constructor(id: number, name: string) {
+        this.id = id;
+        this.name = name;
+      }
+
+      public get getId() {
+        return this.id.toString();
+      }
+
+      public print(): string {
+        return `${this.id} - ${this.name}`;
+      }
+    }
+    const u1 = new User(1, 'ClassUser One');
+    const u2 = new User(2, 'ClassUser Two');
+
+    const reg: r.Registry = {
+      records: {},
+      register: {},
+    };
+
+    r.add(reg, u1);
+    r.add(reg, u2, u1);
+    const json = r.saveToJson(reg);
+    expect(json).toBe(
+      `{"records":{"1":{"id":1,"name":"ClassUser One"},"2":{"id":2,"name":"ClassUser Two"}},"register":{"1":"*","2":"1"}}`
+    );
+
+    const result = r.loadFromJson(json);
+    expect(r.printAll(result)).toBe(` 1 | *
+ 2 | 1
+`);
+    const r1 = r.getRecord(result, u1.getId);
+    const r2 = r.getRecord(result, u2.getId);
+    expect(r1).toEqual(u1);
+    expect(r2).toEqual(u2);
+  });
+});
