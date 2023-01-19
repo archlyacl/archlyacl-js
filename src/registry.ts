@@ -114,8 +114,16 @@ export function getChildIds(reg: Registry, parent: Entity | string): string[] {
  *
  * @param reg - The Registry object to get the entity from.
  * @param entityId - The ID of the entity to retrieve from the records.
+ * @param instantiator - Optional. The factory function for instantiating class instances from the serialized object. This function must accept a single parameter that is of type Entity and return a class constrained by Entity.
  */
-export function getRecord(reg: Registry, entityId: string): Entity {
+export function getRecord<T extends Entity>(
+  reg: Registry,
+  entityId: string,
+  instantiator?: (e: Entity) => T
+): T | Entity {
+  if (instantiator) {
+    return instantiator(reg.records[entityId]);
+  }
   return reg.records[entityId];
 }
 
@@ -151,13 +159,17 @@ export function hasChild(reg: Registry, parent: Entity): boolean {
  * Recreates the records and register from a JSON string that should be serialized from `saveToJson`.
  *
  * @param json - The supplied JSON string.
+ * @param instantiator - Optional. The factory function for instantiating class instances from the serialized object. This function must accept a single parameter that is of type Entity and return a class constrained by Entity.
  *
  * @see saveToJson
  * @see recreate
  */
-export function loadFromJson(json: string): Registry {
+export function loadFromJson<T extends Entity>(
+  json: string,
+  instantiator?: (e: Entity) => T
+): Registry {
   const obj = JSON.parse(json);
-  return recreate(obj);
+  return recreate(obj, instantiator);
 }
 
 /**
@@ -218,9 +230,13 @@ export function printAll(reg: Registry): string {
  * Re-creates the registry with a new hierarchy.
  *
  * @param from - The object with the keys `records` and `register` to import.
+ * @param instantiator - Optional. The factory function for instantiating class instances from the serialized object. This function must accept a single parameter that is of type Entity and return a class constrained by Entity.
  * @throws {InvalidTypeError} Throws this error if the supplied argument does not contain either `records` or `register` as objects.
  */
-export function recreate(from: Record<'records' | 'register', any>): Registry {
+export function recreate<T extends Entity>(
+  from: Record<'records' | 'register', any>,
+  instantiator?: (e: Entity) => T
+): Registry {
   const reg: Registry = {
     records: {},
     register: {},
@@ -239,6 +255,8 @@ export function recreate(from: Record<'records' | 'register', any>): Registry {
   for (const k in from.records) {
     if (typeof from.records[k] === 'string') {
       reg.records[k] = from.records[k];
+    } else if (instantiator) {
+      reg.records[k] = instantiator(from.records[k]);
     } else {
       reg.records[k] = Object.assign({}, from.records[k]);
     }

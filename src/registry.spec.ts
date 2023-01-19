@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { DuplicateError, InvalidTypeError, NotFoundError } from './errors';
 import * as r from './registry';
-import { ROOT_ENTITY } from './types';
+import { Entity, ROOT_ENTITY } from './types';
 
 describe('Single level', () => {
   const reg: r.Registry = {
@@ -724,6 +724,26 @@ describe('Save/Load', () => {
         this.name = name;
       }
 
+      public static maker(e: Entity): User {
+        if (typeof e === 'string') {
+          return new User(e, e);
+        }
+        if (typeof e.id === 'string') {
+          let name = e.id;
+          if ('name' in e && typeof e.name === 'string') {
+            name = e.name;
+          }
+          return new User(e.id, name);
+        } else {
+          let id: string = e.id.toString();
+          let name = id;
+          if ('name' in e && typeof e.name === 'string') {
+            name = e.name;
+          }
+          return new User(id, name);
+        }
+      }
+
       public print(): string {
         return `${this.id} - ${this.name}`;
       }
@@ -749,8 +769,17 @@ describe('Save/Load', () => {
 `);
     const r1 = r.getRecord(result, u1.id);
     expect(r1).toEqual(u1);
-    const r2 = r.getRecord(result, u2.id);
-    expect(r2).toEqual(u2);
+    expect(r1 instanceof User).toBe(false);
+    const s1 = r.getRecord<User>(result, u1.id, User.maker);
+    expect(s1).toEqual(u1);
+    expect(s1 instanceof User).toBe(true);
+    expect((s1 as User).print()).toBe(`u1 - ClassUser One`);
+
+    const correct = r.loadFromJson<User>(json, User.maker);
+    const c2 = r.getRecord(correct, u2.id);
+    expect(c2).toEqual(u2);
+    expect(c2 instanceof User).toBe(true);
+    expect((c2 as User).print()).toBe(`u2 - ClassUser Two`);
   });
 
   test(`entities with numeric IDs as classes`, () => {
@@ -765,6 +794,26 @@ describe('Save/Load', () => {
 
       public get getId() {
         return this.id.toString();
+      }
+
+      public static maker(e: Entity): User {
+        if (typeof e === 'string') {
+          return new User(parseInt(e), e);
+        }
+        if (typeof e.id === 'string') {
+          let name = e.id;
+          if ('name' in e && typeof e.name === 'string') {
+            name = e.name;
+          }
+          return new User(parseInt(e.id), name);
+        } else {
+          let id: string = e.id.toString();
+          let name = id;
+          if ('name' in e && typeof e.name === 'string') {
+            name = e.name;
+          }
+          return new User(parseInt(id), name);
+        }
       }
 
       public print(): string {
@@ -791,8 +840,17 @@ describe('Save/Load', () => {
  2 | 1
 `);
     const r1 = r.getRecord(result, u1.getId);
-    const r2 = r.getRecord(result, u2.getId);
     expect(r1).toEqual(u1);
-    expect(r2).toEqual(u2);
+    expect(r1 instanceof User).toBe(false);
+    const s1 = r.getRecord<User>(result, u1.getId, User.maker);
+    expect(s1).toEqual(u1);
+    expect(s1 instanceof User).toBe(true);
+    expect((u1 as User).print()).toBe(`1 - ClassUser One`);
+
+    const correct = r.loadFromJson<User>(json, User.maker);
+    const c2 = r.getRecord(correct, u2.getId);
+    expect(c2).toEqual(u2);
+    expect(c2 instanceof User).toBe(true);
+    expect((c2 as User).print()).toBe(`2 - ClassUser Two`);
   });
 });
